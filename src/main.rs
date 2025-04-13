@@ -17,11 +17,23 @@ fn main() {
     let _ = bus.borrow_mut().rom_write_byte(5, 0o54);
     let _ = bus.borrow_mut().rom_write_byte(6, 0o74);
 
+    let _ = bus.borrow_mut().rom_write_byte(7, 0o05);
+    let _ = bus.borrow_mut().rom_write_byte(8, 0o15);
+    let _ = bus.borrow_mut().rom_write_byte(9, 0o25);
+    let _ = bus.borrow_mut().rom_write_byte(10, 0o35);
+    let _ = bus.borrow_mut().rom_write_byte(11, 0o45);
+    let _ = bus.borrow_mut().rom_write_byte(12, 0o55);
+    let _ = bus.borrow_mut().rom_write_byte(13, 0o75);
+
     let mut cpu = cpu::CPU::new(bus.clone());
 
     for _ in 0..7 {
         cpu.step();
     }
+    cpu.print_registers();
 
+    for _ in 0..7 {
+        cpu.step();
+    }
     cpu.print_registers();
 }

@@ -79,6 +79,12 @@ impl CPU {
                 let register = CPU::get_register_by_code(register_code);
                 self.inc_register(register);
             }
+            0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
+                // DEC register
+                let register_code = (opcode >> 3) & 0b111;
+                let register = CPU::get_register_by_code(register_code);
+                self.dec_register(register);
+            }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
@@ -131,6 +137,18 @@ impl CPU {
         self.flags.zero = new == 0;
         self.flags.subtraction = false;
         self.flags.half_carry = (current & 0x0F) + 1 > 0x0F;
+        self.flags.carry = current == u8::MAX;
+
+        self.set_register(register, new);
+    }
+
+    fn dec_register(&mut self, register: Register) {
+        let current = self.get_register(register);
+        let new = current.wrapping_sub(1);
+
+        self.flags.zero = new == 0;
+        self.flags.subtraction = true;
+        self.flags.half_carry = (current & 0x0F) == 0;
         self.flags.carry = current == u8::MAX;
 
         self.set_register(register, new);
