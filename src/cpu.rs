@@ -1,10 +1,10 @@
 use crate::bus;
 
 pub struct Flags {
-    zero: bool,
-    subtraction: bool,
-    half_carry: bool,
-    carry: bool,
+    pub zero: bool,
+    pub subtraction: bool,
+    pub half_carry: bool,
+    pub carry: bool,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -20,17 +20,17 @@ enum Register {
 }
 
 pub struct CPU {
-    a: u8,
-    b: u8,
-    c: u8,
-    d: u8,
-    e: u8,
-    h: u8,
-    l: u8,
-    flags: Flags,
+    pub a: u8,
+    pub b: u8,
+    pub c: u8,
+    pub d: u8,
+    pub e: u8,
+    pub h: u8,
+    pub l: u8,
+    pub flags: Flags,
 
-    sp: u16,
-    pc: u16,
+    pub sp: u16,
+    pub pc: u16,
 
     bus: bus::SharedBus,
 }
@@ -70,9 +70,7 @@ impl CPU {
 
         // decode
         match opcode {
-            0x00 => {
-                println!("NOP!")
-            }
+            0x00 => {}
             0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
                 // INC register
                 let register_code = (opcode >> 3) & 0b111;
@@ -115,19 +113,6 @@ impl CPU {
             Register::L => self.l = val,
             Register::HL => unimplemented!("tried to set value for register HL"),
         }
-    }
-
-    pub fn print_registers(&self) {
-        println!("=== CPU Registers ===");
-        println!(
-            "A:  {:02X}    F: Z={} N={} H={} C={}",
-            self.a, self.flags.zero as u8, self.flags.subtraction as u8, self.flags.half_carry as u8, self.flags.carry as u8
-        );
-        println!("B:  {:02X}    C: {:02X}", self.b, self.c);
-        println!("D:  {:02X}    E: {:02X}", self.d, self.e);
-        println!("H:  {:02X}    L: {:02X}", self.h, self.l);
-        println!("SP: {:04X}    PC: {:04X}", self.sp, self.pc);
-        println!("======================\n");
     }
 
     fn inc_register(&mut self, register: Register) {

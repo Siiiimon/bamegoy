@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 pub type SharedBus = Rc<RefCell<Bus>>;
 
 pub struct Bus {
-    rom: Vec<u8> // bank 0 and bank 1+ as one array
+    pub rom: Vec<u8> // bank 0 and bank 1+ as one array
 }
 
 impl Bus {
