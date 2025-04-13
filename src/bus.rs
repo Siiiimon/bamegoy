@@ -15,4 +15,10 @@ impl Bus {
         if addr as usize > self.rom.len() { return None; }
         Some(self.rom[addr as usize])
     }
+
+    pub fn rom_write_byte(&mut self, addr: u16, byte: u8) -> Result<(), String> {
+        if addr as usize > self.rom.len() { return Err(format!("Address {:04X} is outside of ROM bounds", addr)); }
+        self.rom[addr as usize] = byte;
+        Ok(())
+    }
 }
