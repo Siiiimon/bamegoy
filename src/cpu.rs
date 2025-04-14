@@ -64,12 +64,6 @@ impl CPU {
             0x00 => {
                 self.pc += 1;
             }
-            0o01 | 0o21 | 0o41 | 0o61 => {
-                instruction::ld::r16_n16(self, opcode);
-            }
-            0o11 | 0o31 | 0o51 | 0o71 => {
-                instruction::add::r16(self, opcode);
-            }
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
                 if (opcode >> 3) & 0 == 1 {
@@ -90,8 +84,14 @@ impl CPU {
             0o100..=0o175 | 0o167..=0o177 => {
                 instruction::ld::r8_r8(self, opcode);
             }
+            0o01 | 0o21 | 0o41 | 0o61 => {
+                instruction::ld::r16_n16(self, opcode);
+            }
             0o200..=0o207 => {
                 instruction::add::r8(self, opcode);
+            }
+            0o11 | 0o31 | 0o51 | 0o71 => {
+                instruction::add::r16(self, opcode);
             }
             0o210..=0o217 => {
                 instruction::adc::r8(self, opcode);
