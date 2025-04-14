@@ -70,6 +70,8 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             let pair = util::get_register_pair_by_code(opcode >> 4);
             (format!("LD A [{}]", pair), 1)
         }
+        0o42 => (format!("LD [HL+] A"), 1),
+        0o62 => (format!("LD [HL-] A"), 1),
         0o200..=0o207 => {
             let register = util::get_register_by_code(opcode & 0b111);
             (format!("ADD A {}", register), 1)
