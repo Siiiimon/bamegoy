@@ -69,7 +69,10 @@ impl CPU {
                 instruction::dec::r8(self, opcode);
             }
             0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => {
-                instruction::ld::r8(self, opcode);
+                instruction::ld::r8_n8(self, opcode);
+            }
+            0o100..=0o175 | 0o167..=0o177 => {
+                instruction::ld::r8_r8(self, opcode);
             }
             0o303 => {
                 instruction::jp::a16(self);
@@ -89,7 +92,11 @@ impl CPU {
             Register::E => self.e,
             Register::H => self.h,
             Register::L => self.l,
-            Register::HL => unimplemented!("tried to get value of register HL"),
+            Register::HL => self
+                .bus
+                .borrow()
+                .rom_read_byte(((self.h as u16) << 8) | (self.l as u16))
+                .unwrap(),
         }
     }
 
@@ -102,7 +109,11 @@ impl CPU {
             Register::E => self.e = val,
             Register::H => self.h = val,
             Register::L => self.l = val,
-            Register::HL => unimplemented!("tried to set value for register HL"),
+            Register::HL => self
+                .bus
+                .borrow_mut()
+                .rom_write_byte(((self.h as u16) << 8) | (self.l as u16), val)
+                .unwrap(),
         }
     }
 }

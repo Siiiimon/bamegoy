@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Register {
     B,
     C,
