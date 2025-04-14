@@ -55,3 +55,20 @@ pub fn addr_of_r16_a(cpu: &mut cpu::CPU, opcode: u8) {
 
     cpu.pc +=1;
 }
+
+pub fn a_addr_of_r16(cpu: &mut cpu::CPU, opcode: u8) {
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+    let addr = cpu.get_register_pair(pair);
+
+    let value = match cpu.bus.borrow().rom_read_byte(addr) {
+        Some(byte) => byte,
+        None => {
+            eprintln!("Tried to read invalid ROM address: {:04X}", cpu.pc);
+            return;
+        }
+    };
+
+    cpu.set_register(util::Register::A, value);
+
+    cpu.pc +=1;
+}
