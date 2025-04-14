@@ -1,7 +1,7 @@
 use crate::util;
 
 pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
-    let opcode = rom.get(pc as usize).copied().unwrap_or(0x00);
+    let opcode = rom.get(pc as usize).copied().unwrap();
     match opcode {
         0o00 => ("NOP".into(), 1),
         0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
@@ -30,13 +30,52 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             };
             (format!("LD {} {}", register, value), 2)
         }
+        0o100..=0o175 | 0o167..=0o177 => {
+            let dst = util::get_register_by_code((opcode >> 3) & 0b111);
+            let src = util::get_register_by_code(opcode & 0b111);
+            (format!("LD {} {}", dst, src), 1)
+        }
+        0o200..=0o207 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("ADD A {}", register), 1)
+        }
+        0o210..=0o217 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("ADC A {}", register), 1)
+        }
+        0o220..=0o227 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("SUB A {}", register), 1)
+        }
+        0o230..=0o237 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("SBC A {}", register), 1)
+        }
+        0o240..=0o247 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("AND A {}", register), 1)
+        }
+        0o250..=0o257 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("XOR A {}", register), 1)
+        }
+        0o260..=0o267 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("OR A {}", register), 1)
+        }
+        0o270..=0o277 => {
+            let register = util::get_register_by_code(opcode & 0b111);
+            (format!("CP A {}", register), 1)
+        }
         0o303 => {
             // JP a16
             let lo = rom.get((pc + 1) as usize).unwrap();
             let hi = rom.get((pc + 2) as usize).unwrap();
             (format!("JP {:04X}", ((*hi as u16) << 8) | *lo as u16), 3)
         }
-        _ => ("???".into(), 1)
+        _ => {
+            (format!("UNKNOWN: 0o{:03o}", opcode), 1)
+        }
     }
 }
 

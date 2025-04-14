@@ -135,8 +135,8 @@ impl eframe::App for BamegoyApp {
 
             ui.separator();
             ui.label("current instruction:");
-            let (disasm, _) = disassemble(&self.bus.borrow().rom, self.cpu.pc);
-            ui.monospace(disasm);
+            let (mnemonic, _) = disassemble(&self.bus.borrow().rom, self.cpu.pc);
+            ui.monospace(mnemonic);
         });
 
         egui::TopBottomPanel::bottom("rom_panel")
