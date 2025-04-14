@@ -74,6 +74,30 @@ impl CPU {
             0o100..=0o175 | 0o167..=0o177 => {
                 instruction::ld::r8_r8(self, opcode);
             }
+            0o200..=0o207 => {
+                instruction::add::r8(self, opcode);
+            }
+            0o210..=0o217 => {
+                instruction::adc::r8(self, opcode);
+            }
+            0o220..=0o227 => {
+                instruction::sub::r8(self, opcode);
+            }
+            0o230..=0o237 => {
+                instruction::sbc::r8(self, opcode);
+            }
+            0o240..=0o247 => {
+                instruction::and::r8(self, opcode);
+            }
+            0o250..=0o257 => {
+                instruction::xor::r8(self, opcode);
+            }
+            0o260..=0o267 => {
+                instruction::or::r8(self, opcode);
+            }
+            0o270..=0o277 => {
+                instruction::cp::r8(self, opcode);
+            }
             0o303 => {
                 instruction::jp::a16(self);
             }
