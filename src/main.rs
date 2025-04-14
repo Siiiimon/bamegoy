@@ -1,13 +1,13 @@
-use std::{cell::RefCell, rc::Rc};
+use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
-use bus::Bus;
 use egui::RichText;
+use std::{cell::RefCell, rc::Rc};
 
-pub mod cpu;
 pub mod bus;
-pub mod util;
+pub mod cpu;
 pub mod disassemble;
+pub mod util;
 
 struct BamegoyApp {
     bus: bus::SharedBus,
@@ -56,7 +56,6 @@ fn main() -> eframe::Result {
     )
 }
 
-
 impl eframe::App for BamegoyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("controls_panel").show(ctx, |ui| {
@@ -74,7 +73,7 @@ impl eframe::App for BamegoyApp {
                 if ui.button("⟳").on_hover_text("Reset").clicked() {
                     self.cpu = cpu::CPU::new(self.bus.clone());
                 }
-    });
+            });
         });
 
         egui::SidePanel::left("cpu_info_panel").show(ctx, |ui| {
@@ -85,7 +84,8 @@ impl eframe::App for BamegoyApp {
 
             ui.separator();
             ui.monospace(format!("A:   {:02X}", self.cpu.a));
-            ui.monospace(format!("F:   Z={} N={} H={} C={}",
+            ui.monospace(format!(
+                "F:   Z={} N={} H={} C={}",
                 self.cpu.flags.zero as u8,
                 self.cpu.flags.subtraction as u8,
                 self.cpu.flags.half_carry as u8,
@@ -103,33 +103,82 @@ impl eframe::App for BamegoyApp {
             ui.monospace(disasm);
         });
 
+        egui::TopBottomPanel::bottom("rom_panel")
+            .default_height(250.0)
+            .resizable(true)
+            .show(ctx, |ui| {
+                ui.heading("ROM Viewer");
+
+                egui::ScrollArea::vertical().show_rows(
+                    ui,
+                    ui.text_style_height(&egui::TextStyle::Monospace),
+                    0x8000 / 16,
+                    |ui, row_range| {
+                        let rom = &self.bus.borrow().rom;
+
+                        for row in row_range {
+                            let addr = row * 16;
+                            let chunk = &rom[addr..(addr + 16).min(rom.len())];
+
+                            ui.horizontal(|ui| {
+                                ui.monospace(format!("{:04X}:", addr));
+
+                                for (i, byte) in chunk.iter().enumerate() {
+                                    let byte_addr = addr + i;
+
+                                    let text = format!("{:02X}", byte);
+                                    let rich = if byte_addr == self.cpu.pc as usize {
+                                        RichText::new(text).color(egui::Color32::YELLOW)
+                                    } else {
+                                        RichText::new(text)
+                                    };
+
+                                    ui.monospace(rich);
+                                }
+                            });
+                        }
+                    },
+                );
+            });
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("ROM Viewer");
+            ui.heading("Disassembly");
 
-            egui::ScrollArea::vertical().show_rows(ui, ui.text_style_height(&egui::TextStyle::Monospace), 0x8000 / 16, |ui, row_range| {
-                let rom = &self.bus.borrow().rom;
+            let rom = &self.bus.borrow().rom;
 
-                for row in row_range {
-                    let addr = row * 16;
-                    let chunk = &rom[addr..(addr + 16).min(rom.len())];
+            let mut pc_lookup = vec![];
+            let mut pc = 0x0000;
 
-                    ui.horizontal(|ui| {
-                        ui.monospace(format!("{:04X}:", addr));
+            while pc < rom.len() {
+                pc_lookup.push(pc);
+                let (_, size) = disassemble(rom, pc as u16);
+                pc += size as usize;
+            }
 
-                        for (i, byte) in chunk.iter().enumerate() {
-                            let byte_addr = addr + i;
+            let row_height = ui.text_style_height(&egui::TextStyle::Monospace);
 
-                            let text = format!("{:02X}", byte);
-                            let rich = if byte_addr == self.cpu.pc as usize {
-                                RichText::new(text).color(egui::Color32::YELLOW)
+            ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
+                egui::ScrollArea::vertical().show_rows(
+                    ui,
+                    row_height,
+                    pc_lookup.len(),
+                    |ui, range| {
+                        for row in range {
+                            let pc = pc_lookup[row];
+                            let (instr, _) = disassemble(rom, pc as u16);
+
+                            let label = if pc == self.cpu.pc as usize {
+                                RichText::new(format!("{:04X}: {}", pc, instr))
+                                    .monospace()
+                                    .background_color(egui::Color32::from_gray(45))
                             } else {
-                                RichText::new(text)
+                                RichText::new(format!("{:04X}: {}", pc, instr)).monospace()
                             };
 
-                            ui.monospace(rich);
+                            ui.label(label);
                         }
-                    });
-                }
+                    },
+                );
             });
         });
     }
