@@ -64,6 +64,9 @@ impl CPU {
             0x00 => {
                 self.pc += 1;
             }
+            0o01 | 0o21 | 0o41 | 0o61 => {
+                instruction::ld::r16_n16(self, opcode);
+            }
             0o11 | 0o31 | 0o51 | 0o71 => {
                 instruction::add::r16(self, opcode);
             }

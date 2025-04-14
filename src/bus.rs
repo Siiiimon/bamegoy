@@ -16,6 +16,15 @@ impl Bus {
         Some(self.rom[addr as usize])
     }
 
+    pub fn rom_read_word(&self, addr: u16) -> Option<u16> {
+        if (addr as usize) + 1 >= self.rom.len() { return None; }
+
+        let hi = self.rom[(addr + 1) as usize] as u16;
+        let lo = self.rom[addr as usize] as u16;
+
+        Some((hi << 8) | lo)
+    }
+
     pub fn rom_write_byte(&mut self, addr: u16, byte: u8) -> Result<(), String> {
         if addr as usize > self.rom.len() { return Err(format!("Address {:04X} is outside of ROM bounds", addr)); }
         self.rom[addr as usize] = byte;

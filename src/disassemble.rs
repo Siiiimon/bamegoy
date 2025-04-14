@@ -4,6 +4,25 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
     let opcode = rom.get(pc as usize).copied().unwrap();
     match opcode {
         0o00 => ("NOP".into(), 1),
+        0o01 | 0o21 | 0o41 | 0o61 => {
+            let pair = util::get_register_pair_by_code(opcode >> 4);
+            let hi = match rom.get((pc as usize) + 1) {
+                Some(byte) => byte,
+                None => {
+                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
+                    return ("???".into(), 3);
+                }
+            };
+            let lo = match rom.get((pc as usize) + 2) {
+                Some(byte) => byte,
+                None => {
+                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
+                    return ("???".into(), 3);
+                }
+            };
+            (format!("LD {} {}", pair, ((*hi as u16) << 8) | (*lo as u16)), 3)
+
+        }
         0o11 | 0o31 | 0o51 | 0o71 => {
             (format!("ADD HL {}", util::get_register_pair_by_code((opcode >> 4) & 0b11)), 1)
         }
@@ -39,7 +58,7 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
                     return ("???".into(), 2);
                 }
             };
-            (format!("LD {} {}", register, value), 2)
+            (format!("LD {} {}", register, *value), 2)
         }
         0o100..=0o175 | 0o167..=0o177 => {
             let dst = util::get_register_by_code((opcode >> 3) & 0b111);
