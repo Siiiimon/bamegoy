@@ -30,6 +30,12 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             };
             (format!("LD {} {}", register, value), 2)
         }
+        0o303 => {
+            // JP a16
+            let lo = rom.get((pc + 1) as usize).unwrap();
+            let hi = rom.get((pc + 2) as usize).unwrap();
+            (format!("JP {:04X}", ((*hi as u16) << 8) | *lo as u16), 3)
+        }
         _ => ("???".into(), 1)
     }
 }

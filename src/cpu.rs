@@ -89,6 +89,12 @@ impl CPU {
                 self.set_register(register, value);
                 self.pc += 1;
             }
+            0o303 => {
+                // JP a16
+                let lo = self.bus.borrow().rom_read_byte(self.pc + 1).unwrap();
+                let hi = self.bus.borrow().rom_read_byte(self.pc + 2).unwrap();
+                self.pc = ((hi as u16) << 8) | lo as u16;
+            }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }

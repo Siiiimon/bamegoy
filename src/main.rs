@@ -47,6 +47,10 @@ impl Default for BamegoyApp {
         let _ = b.borrow_mut().rom_write_byte(25, 0x69);
         let _ = b.borrow_mut().rom_write_byte(26, 0o76);
         let _ = b.borrow_mut().rom_write_byte(27, 0x69);
+
+        let _ = b.borrow_mut().rom_write_byte(28, 0o303);
+        let _ = b.borrow_mut().rom_write_byte(29, 0);
+        let _ = b.borrow_mut().rom_write_byte(30, 0);
         Self {
             bus: b.clone(),
             cpu: cpu::CPU::new(b.clone()),
