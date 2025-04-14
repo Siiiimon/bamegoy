@@ -4,6 +4,9 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
     let opcode = rom.get(pc as usize).copied().unwrap();
     match opcode {
         0o00 => ("NOP".into(), 1),
+        0o11 | 0o31 | 0o51 | 0o71 => {
+            (format!("ADD HL {}", util::get_register_pair_by_code((opcode >> 4) & 0b11)), 1)
+        }
         0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
             let pair = util::get_register_pair_by_code(opcode >> 4);
             if (opcode >> 3) & 0 == 1 {

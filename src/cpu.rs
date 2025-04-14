@@ -1,8 +1,8 @@
-use crate::util::RegisterPair;
 use crate::bus;
 use crate::instruction;
-use crate::util::get_register_pair_by_code;
 use crate::util::Register;
+use crate::util::RegisterPair;
+use crate::util::get_register_pair_by_code;
 
 pub struct Flags {
     pub zero: bool,
@@ -63,6 +63,9 @@ impl CPU {
         match opcode {
             0x00 => {
                 self.pc += 1;
+            }
+            0o11 | 0o31 | 0o51 | 0o71 => {
+                instruction::add::r16(self, opcode);
             }
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
@@ -165,19 +168,18 @@ impl CPU {
             RegisterPair::BC => {
                 self.b = (val >> 8) as u8;
                 self.c = val as u8;
-            },
+            }
             RegisterPair::DE => {
                 self.d = (val >> 8) as u8;
                 self.e = val as u8;
-            },
+            }
             RegisterPair::HL => {
                 self.h = (val >> 8) as u8;
                 self.l = val as u8;
-            },
+            }
             RegisterPair::SP => {
                 self.sp = val;
-            },
+            }
         }
     }
-
 }

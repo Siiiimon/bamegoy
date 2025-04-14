@@ -15,3 +15,18 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
 
     cpu.pc += 1;
 }
+
+pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+    let hl = cpu.get_register_pair(util::RegisterPair::HL);
+    let xy = cpu.get_register_pair(pair);
+
+    let (value, carry) = hl.overflowing_add(xy);
+    cpu.set_register_pair(util::RegisterPair::HL, value);
+
+    cpu.flags.subtraction = false;
+    cpu.flags.carry = carry;
+    cpu.flags.half_carry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
+
+    cpu.pc += 1;
+}
