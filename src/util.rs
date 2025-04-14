@@ -41,3 +41,35 @@ pub fn get_register_by_code(code: u8) -> Register {
         _ => unreachable!(),
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RegisterPair {
+    BC,
+    DE,
+    HL,
+    SP,
+}
+
+impl fmt::Display for RegisterPair {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            RegisterPair::BC => "BC",
+            RegisterPair::DE => "DE",
+            RegisterPair::HL => "HL",
+            RegisterPair::SP => "SP",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+pub fn get_register_pair_by_code(code: u8) -> RegisterPair {
+    match code & 0b11 {
+        0 => RegisterPair::BC,
+        1 => RegisterPair::DE,
+        2 => RegisterPair::HL,
+        3 => RegisterPair::SP,
+        _ => unreachable!(),
+    }
+}
+
+

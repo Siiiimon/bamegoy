@@ -1,5 +1,7 @@
+use crate::util::RegisterPair;
 use crate::bus;
 use crate::instruction;
+use crate::util::get_register_pair_by_code;
 use crate::util::Register;
 
 pub struct Flags {
@@ -61,6 +63,14 @@ impl CPU {
         match opcode {
             0x00 => {
                 self.pc += 1;
+            }
+            0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
+                let pair = get_register_pair_by_code(opcode >> 4);
+                if (opcode >> 3) & 0 == 1 {
+                    instruction::inc::r16(self, pair);
+                } else {
+                    instruction::dec::r16(self, pair);
+                }
             }
             0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
                 instruction::inc::r8(self, opcode);
@@ -140,4 +150,34 @@ impl CPU {
                 .unwrap(),
         }
     }
+
+    pub fn get_register_pair(&mut self, pair: RegisterPair) -> u16 {
+        match pair {
+            RegisterPair::BC => ((self.b as u16) << 8) | (self.c as u16),
+            RegisterPair::DE => ((self.d as u16) << 8) | (self.e as u16),
+            RegisterPair::HL => ((self.h as u16) << 8) | (self.l as u16),
+            RegisterPair::SP => self.sp,
+        }
+    }
+
+    pub fn set_register_pair(&mut self, pair: RegisterPair, val: u16) {
+        match pair {
+            RegisterPair::BC => {
+                self.b = (val >> 8) as u8;
+                self.c = val as u8;
+            },
+            RegisterPair::DE => {
+                self.d = (val >> 8) as u8;
+                self.e = val as u8;
+            },
+            RegisterPair::HL => {
+                self.h = (val >> 8) as u8;
+                self.l = val as u8;
+            },
+            RegisterPair::SP => {
+                self.sp = val;
+            },
+        }
+    }
+
 }

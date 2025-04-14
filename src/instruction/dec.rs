@@ -16,3 +16,12 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
 
     cpu.pc += 1;
 }
+
+pub fn r16(cpu: &mut cpu::CPU, pair: util::RegisterPair) {
+    let current = cpu.get_register_pair(pair);
+    let new = current.wrapping_sub(1);
+
+    cpu.set_register_pair(pair, new);
+
+    cpu.pc += 1;
+}
