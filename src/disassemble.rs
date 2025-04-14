@@ -1,6 +1,6 @@
 use crate::util;
 
-pub fn disassemble(rom: &Vec<u8>, pc: u16) -> (String, u16) {
+pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
     let opcode = rom.get(pc as usize).copied().unwrap_or(0x00);
     match opcode {
         0o00 => ("NOP".into(), 1),
@@ -15,6 +15,20 @@ pub fn disassemble(rom: &Vec<u8>, pc: u16) -> (String, u16) {
             let register_code = (opcode >> 3) & 0b111;
             let register = util::get_register_by_code(register_code);
             (format!("DEC {}", register), 1)
+        }
+        0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => {
+            // LD register
+            let register_code = (opcode >> 3) & 0b111;
+            let register = util::get_register_by_code(register_code);
+            pc += 1;
+            let value = match rom.get(pc as usize) {
+                Some(byte) => byte,
+                None => {
+                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
+                    return ("???".into(), 2);
+                }
+            };
+            (format!("LD {} {}", register, value), 2)
         }
         _ => ("???".into(), 1)
     }

@@ -56,7 +56,6 @@ impl CPU {
                 return;
             }
         };
-        self.pc += 1;
 
         // decode
         match opcode {
@@ -66,12 +65,29 @@ impl CPU {
                 let register_code = (opcode >> 3) & 0b111;
                 let register = util::get_register_by_code(register_code);
                 self.inc_register(register);
+                self.pc += 1;
             }
             0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
                 // DEC register
                 let register_code = (opcode >> 3) & 0b111;
                 let register = util::get_register_by_code(register_code);
                 self.dec_register(register);
+                self.pc += 1;
+            }
+            0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => {
+                // LD register
+                let register_code = (opcode >> 3) & 0b111;
+                let register = util::get_register_by_code(register_code);
+                self.pc += 1;
+                let value = match self.bus.borrow().rom_read_byte(self.pc) {
+                    Some(byte) => byte,
+                    None => {
+                        eprintln!("Tried to read invalid ROM address: {:04X}", self.pc);
+                        return;
+                    }
+                };
+                self.set_register(register, value);
+                self.pc += 1;
             }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
