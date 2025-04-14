@@ -1,4 +1,4 @@
-use crate::cpu;
+use crate::{cpu, util};
 
 pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
     let lo = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap();
@@ -36,4 +36,9 @@ pub fn e8(cpu: &mut cpu::CPU, opcode: u8) {
     } else {
         cpu.pc += 2;
     }
+}
+
+pub fn hl(cpu: &mut cpu::CPU) {
+    let addr = cpu.get_register_pair(util::RegisterPair::HL);
+    cpu.pc = addr;
 }
