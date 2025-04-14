@@ -9,22 +9,41 @@ pub mod cpu;
 pub mod disassemble;
 pub mod util;
 
+struct UiState {
+    disasm_should_scroll: bool,
+    disasm_should_follow_pc: bool,
+    disasm_scroll_y: f32,
+    last_pc: u16,
+    current_instruction_index: usize,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            disasm_should_scroll: false,
+            disasm_should_follow_pc: true,
+            disasm_scroll_y: 0.0,
+            last_pc: 0,
+            current_instruction_index: 0,
+        }
+    }
+}
+
 struct BamegoyApp {
     bus: bus::SharedBus,
     cpu: cpu::CPU,
+    ui_state: UiState,
 }
 
 impl BamegoyApp {
     pub fn new(rom_filepath: Option<&Path>) -> Self {
         let cartridge_rom: Vec<u8> = match rom_filepath {
-            Some(p) => {
-                match fs::read(p) {
-                    Err(e) => {
-                        eprintln!("failed to read {:?}: {}", p, e);
-                        vec![0; 0x8000]
-                    },
-                    Ok(c) => c,
+            Some(p) => match fs::read(p) {
+                Err(e) => {
+                    eprintln!("failed to read {:?}: {}", p, e);
+                    vec![0; 0x8000]
                 }
+                Ok(c) => c,
             },
             None => vec![0; 0x8000],
         };
@@ -41,6 +60,7 @@ impl BamegoyApp {
         Self {
             bus: b.clone(),
             cpu: cpu::CPU::new(b.clone()),
+            ui_state: UiState::default(),
         }
     }
 }
@@ -159,41 +179,60 @@ impl eframe::App for BamegoyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Disassembly");
 
+            ui.horizontal(|ui| {
+                ui.checkbox(
+                    &mut self.ui_state.disasm_should_follow_pc,
+                    "follow current instruction",
+                );
+            });
+
             let rom = &self.bus.borrow().rom;
 
             let mut pc_lookup = vec![];
             let mut pc = 0x0000;
+            let mut instruction_counter = 0;
 
             while pc < rom.len() {
                 pc_lookup.push(pc);
                 let (_, size) = disassemble(rom, pc as u16);
+                if pc == self.cpu.pc as usize {
+                    self.ui_state.current_instruction_index = instruction_counter;
+                }
                 pc += size as usize;
+                instruction_counter += 1;
             }
 
             let row_height = ui.text_style_height(&egui::TextStyle::Monospace);
+            if self.cpu.pc != self.ui_state.last_pc {
+                self.ui_state.last_pc = self.cpu.pc;
+
+                if self.ui_state.disasm_should_follow_pc {
+                    self.ui_state.disasm_scroll_y = (row_height + 3.0) * self.ui_state.current_instruction_index as f32;
+                    self.ui_state.disasm_should_scroll = true;
+                }
+            }
+
+            let mut scroll_area = egui::ScrollArea::vertical();
+            if self.ui_state.disasm_should_scroll {
+                scroll_area = scroll_area.vertical_scroll_offset(self.ui_state.disasm_scroll_y);
+                self.ui_state.disasm_should_scroll = false;
+            }
 
             ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
-                egui::ScrollArea::vertical().show_rows(
-                    ui,
-                    row_height,
-                    pc_lookup.len(),
-                    |ui, range| {
-                        for row in range {
-                            let pc = pc_lookup[row];
-                            let (instr, _) = disassemble(rom, pc as u16);
+                scroll_area.show_rows(ui, row_height, pc_lookup.len(), |ui, range| {
+                    for row in range {
+                        let pc = pc_lookup[row];
+                        let (instr, _) = disassemble(rom, pc as u16);
 
-                            let label = if pc == self.cpu.pc as usize {
-                                RichText::new(format!("{:04X}: {}", pc, instr))
-                                    .monospace()
-                                    .background_color(egui::Color32::from_gray(45))
-                            } else {
-                                RichText::new(format!("{:04X}: {}", pc, instr)).monospace()
-                            };
+                        let text = RichText::new(format!("{:04X}: {}", pc, instr)).monospace();
 
-                            ui.label(label);
+                        if pc == self.cpu.pc as usize {
+                            ui.label(text.background_color(egui::Color32::from_gray(40)));
+                        } else {
+                            ui.label(text);
                         }
-                    },
-                );
+                    }
+                });
             });
         });
     }
