@@ -109,6 +109,24 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             let register = util::get_register_by_code(opcode & 0b111);
             (format!("CP A {}", register), 1)
         }
+        0o30 | 0o40 | 0o50 | 0o60 | 0o70 => {
+            let offset = match rom.get((pc as usize) + 1) {
+                Some(byte) => *byte as i8,
+                None => {
+                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
+                    return ("???".into(), 2);
+                }
+            };
+            let conditional = match opcode >> 4 {
+                1 => "",
+                2 => "NZ ",
+                3 => "Z ",
+                4 => "NC ",
+                5 => "C ",
+                _ => "??? ",
+            };
+            (format!("JR {}{}", conditional, offset as u8), 2)
+        }
         0o303 => {
             // JP a16
             let lo = rom.get((pc + 1) as usize).unwrap();

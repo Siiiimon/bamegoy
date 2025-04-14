@@ -71,5 +71,3 @@ pub fn get_register_pair_by_code(code: u8) -> RegisterPair {
         _ => unreachable!(),
     }
 }
-
-
