@@ -29,5 +29,5 @@ Start:
     ld l, $69
     ld a, $69
 
-    jp $0000
+    jp Start
 
