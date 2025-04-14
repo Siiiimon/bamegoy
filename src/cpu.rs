@@ -127,8 +127,8 @@ impl CPU {
             0o30 | 0o40 | 0o50 | 0o60 | 0o70 => {
                 instruction::jump::e8(self, opcode);
             }
-            0o303 => {
-                instruction::jump::a16(self);
+            0o302 | 0o303 | 0o312 | 0o322 | 0o332 => {
+                instruction::jump::a16(self, opcode);
             }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);

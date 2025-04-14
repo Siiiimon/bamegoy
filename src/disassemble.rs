@@ -127,11 +127,23 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             };
             (format!("JR {}{}", conditional, offset as u8), 2)
         }
-        0o303 => {
-            // JP a16
+        0o302 | 0o303 | 0o312 | 0o322 | 0o332  => {
             let lo = rom.get((pc + 1) as usize).unwrap();
             let hi = rom.get((pc + 2) as usize).unwrap();
-            (format!("JP {:04X}", ((*hi as u16) << 8) | *lo as u16), 3)
+
+            let conditional = match opcode >> 4 {
+                2 => "NZ",
+                3 => "Z",
+                4 => "NC",
+                5 => "C",
+                _ => "???",
+            };
+
+            if opcode == 0o303 {
+                (format!("JP {:04X}", ((*hi as u16) << 8) | *lo as u16), 3)
+            } else {
+                (format!("JP {} {:04X}", conditional, ((*hi as u16) << 8) | *lo as u16), 3)
+            }
         }
         _ => {
             (format!("UNKNOWN: 0o{:03o}", opcode), 1)
