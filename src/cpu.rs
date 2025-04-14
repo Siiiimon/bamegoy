@@ -94,7 +94,9 @@ impl CPU {
                 instruction::ld::a_addr_of_r16(self, opcode);
             }
             0o42 => instruction::ld::addr_of_hl_a(self, true),
+            0o52 => instruction::ld::a_addr_of_hl(self, true),
             0o62 => instruction::ld::addr_of_hl_a(self, false),
+            0o72 => instruction::ld::a_addr_of_hl(self, false),
             0o200..=0o207 => {
                 instruction::add::r8(self, opcode);
             }

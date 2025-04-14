@@ -86,3 +86,17 @@ pub fn addr_of_hl_a(cpu: &mut cpu::CPU, should_increase: bool) {
 
     cpu.pc += 1;
 }
+
+pub fn a_addr_of_hl(cpu: &mut cpu::CPU, should_increase: bool) {
+    let value = cpu.get_register(util::Register::HL);
+    cpu.set_register(util::Register::A, value);
+
+    let hl = cpu.get_register_pair(util::RegisterPair::HL);
+    if should_increase {
+        cpu.set_register_pair(util::RegisterPair::HL, hl.wrapping_add(1));
+    } else {
+        cpu.set_register_pair(util::RegisterPair::HL, hl.wrapping_sub(1));
+    }
+
+    cpu.pc += 1;
+}
