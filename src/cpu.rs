@@ -42,7 +42,7 @@ impl CPU {
                 carry: false,
             },
             sp: 0,
-            pc: 0,
+            pc: 0x0100,
             bus,
         }
     }

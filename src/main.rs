@@ -2,7 +2,7 @@ use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
 use egui::RichText;
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, env, fs, path::Path, rc::Rc};
 
 pub mod bus;
 pub mod cpu;
@@ -14,43 +14,30 @@ struct BamegoyApp {
     cpu: cpu::CPU,
 }
 
-impl Default for BamegoyApp {
-    fn default() -> Self {
+impl BamegoyApp {
+    pub fn new(rom_filepath: Option<&Path>) -> Self {
+        let cartridge_rom: Vec<u8> = match rom_filepath {
+            Some(p) => {
+                match fs::read(p) {
+                    Err(e) => {
+                        eprintln!("failed to read {:?}: {}", p, e);
+                        vec![0; 0x8000]
+                    },
+                    Ok(c) => c,
+                }
+            },
+            None => vec![0; 0x8000],
+        };
+
         let b = Rc::new(RefCell::new(Bus::new()));
-        let _ = b.borrow_mut().rom_write_byte(0, 0o04);
-        let _ = b.borrow_mut().rom_write_byte(1, 0o14);
-        let _ = b.borrow_mut().rom_write_byte(2, 0o24);
-        let _ = b.borrow_mut().rom_write_byte(3, 0o34);
-        let _ = b.borrow_mut().rom_write_byte(4, 0o44);
-        let _ = b.borrow_mut().rom_write_byte(5, 0o54);
-        let _ = b.borrow_mut().rom_write_byte(6, 0o74);
+        match b.borrow_mut().from_cartridge_rom(cartridge_rom) {
+            Err(e) => {
+                eprintln!("{}", e);
+                ()
+            }
+            Ok(_) => (),
+        }
 
-        let _ = b.borrow_mut().rom_write_byte(7, 0o05);
-        let _ = b.borrow_mut().rom_write_byte(8, 0o15);
-        let _ = b.borrow_mut().rom_write_byte(9, 0o25);
-        let _ = b.borrow_mut().rom_write_byte(10, 0o35);
-        let _ = b.borrow_mut().rom_write_byte(11, 0o45);
-        let _ = b.borrow_mut().rom_write_byte(12, 0o55);
-        let _ = b.borrow_mut().rom_write_byte(13, 0o75);
-
-        let _ = b.borrow_mut().rom_write_byte(14, 0o06);
-        let _ = b.borrow_mut().rom_write_byte(15, 0x69);
-        let _ = b.borrow_mut().rom_write_byte(16, 0o16);
-        let _ = b.borrow_mut().rom_write_byte(17, 0x69);
-        let _ = b.borrow_mut().rom_write_byte(18, 0o26);
-        let _ = b.borrow_mut().rom_write_byte(19, 0x69);
-        let _ = b.borrow_mut().rom_write_byte(20, 0o36);
-        let _ = b.borrow_mut().rom_write_byte(21, 0x69);
-        let _ = b.borrow_mut().rom_write_byte(22, 0o46);
-        let _ = b.borrow_mut().rom_write_byte(23, 0x69);
-        let _ = b.borrow_mut().rom_write_byte(24, 0o56);
-        let _ = b.borrow_mut().rom_write_byte(25, 0x69);
-        let _ = b.borrow_mut().rom_write_byte(26, 0o76);
-        let _ = b.borrow_mut().rom_write_byte(27, 0x69);
-
-        let _ = b.borrow_mut().rom_write_byte(28, 0o303);
-        let _ = b.borrow_mut().rom_write_byte(29, 0);
-        let _ = b.borrow_mut().rom_write_byte(30, 0);
         Self {
             bus: b.clone(),
             cpu: cpu::CPU::new(b.clone()),
@@ -60,6 +47,11 @@ impl Default for BamegoyApp {
 
 fn main() -> eframe::Result {
     env_logger::init();
+    let args: Vec<String> = env::args().collect();
+    let rom_filepath: Option<&Path> = match args.get(1) {
+        Some(p) => Some(Path::new(p)),
+        None => None,
+    };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([680.0, 720.0]),
         ..Default::default()
@@ -70,7 +62,7 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
-            Ok(Box::<BamegoyApp>::default())
+            Ok(Box::new(BamegoyApp::new(rom_filepath)))
         }),
     )
 }
@@ -92,6 +84,10 @@ impl eframe::App for BamegoyApp {
                 if ui.button("⟳").on_hover_text("Reset").clicked() {
                     self.cpu = cpu::CPU::new(self.bus.clone());
                 }
+
+                // ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                //     ui.label(format!("Loaded ROM: {}", self.rom_path.clone()));
+                // })
             });
         });
 

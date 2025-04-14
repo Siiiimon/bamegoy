@@ -21,4 +21,10 @@ impl Bus {
         self.rom[addr as usize] = byte;
         Ok(())
     }
+
+    pub fn from_cartridge_rom(&mut self, cart: Vec<u8>) -> Result<(), String> {
+        if cart.len() > self.rom.len() { return Err(format!("Cartridge rom too big!")); }
+        self.rom[..cart.len()].copy_from_slice(&cart);
+        Ok(())
+    }
 }
