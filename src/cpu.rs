@@ -59,7 +59,9 @@ impl CPU {
 
         // decode
         match opcode {
-            0x00 => {}
+            0x00 => {
+                self.pc += 1;
+            }
             0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
                 // INC register
                 let register_code = (opcode >> 3) & 0b111;
