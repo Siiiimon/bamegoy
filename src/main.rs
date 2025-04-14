@@ -1,10 +1,13 @@
 use std::{cell::RefCell, rc::Rc};
+use disassemble::disassemble;
 use eframe::egui;
 use bus::Bus;
 use egui::RichText;
 
 pub mod cpu;
 pub mod bus;
+pub mod util;
+pub mod disassemble;
 
 struct BamegoyApp {
     bus: bus::SharedBus,
@@ -62,17 +65,11 @@ impl eframe::App for BamegoyApp {
                     self.cpu.step();
                 }
 
-                if ui.button("▶").on_hover_text("Continue").clicked() {
-                    unimplemented!("Continue not implemented yet");
-                }
+                ui.button("▶").on_hover_text("Continue");
 
-                if ui.button("⏸").on_hover_text("Pause").clicked() {
-                    unimplemented!("Pause not implemented yet");
-                }
+                ui.button("⏸").on_hover_text("Pause");
 
-                if ui.button("⏹").on_hover_text("Stop").clicked() {
-                    unimplemented!("Stop not implemented yet");
-                }
+                ui.button("⏹").on_hover_text("Stop");
 
                 if ui.button("⟳").on_hover_text("Reset").clicked() {
                     self.cpu = cpu::CPU::new(self.bus.clone());
@@ -99,6 +96,11 @@ impl eframe::App for BamegoyApp {
             ui.monospace(format!("B:   {:02X}    C: {:02X}", self.cpu.b, self.cpu.c));
             ui.monospace(format!("D:   {:02X}    E: {:02X}", self.cpu.d, self.cpu.e));
             ui.monospace(format!("H:   {:02X}    L: {:02X}", self.cpu.h, self.cpu.l));
+
+            ui.separator();
+            ui.label("current instruction:");
+            let (disasm, _) = disassemble(&self.bus.borrow().rom, self.cpu.pc);
+            ui.monospace(disasm);
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {

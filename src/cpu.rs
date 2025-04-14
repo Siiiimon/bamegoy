@@ -1,22 +1,12 @@
 use crate::bus;
+use crate::util;
+use crate::util::Register;
 
 pub struct Flags {
     pub zero: bool,
     pub subtraction: bool,
     pub half_carry: bool,
     pub carry: bool,
-}
-
-#[derive(Copy, Clone, Debug)]
-enum Register {
-    B,
-    C,
-    D,
-    E,
-    H,
-    L,
-    HL,
-    A,
 }
 
 pub struct CPU {
@@ -74,13 +64,13 @@ impl CPU {
             0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
                 // INC register
                 let register_code = (opcode >> 3) & 0b111;
-                let register = CPU::get_register_by_code(register_code);
+                let register = util::get_register_by_code(register_code);
                 self.inc_register(register);
             }
             0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
                 // DEC register
                 let register_code = (opcode >> 3) & 0b111;
-                let register = CPU::get_register_by_code(register_code);
+                let register = util::get_register_by_code(register_code);
                 self.dec_register(register);
             }
             _ => {
@@ -137,19 +127,5 @@ impl CPU {
         self.flags.carry = current == u8::MAX;
 
         self.set_register(register, new);
-    }
-
-    fn get_register_by_code(code: u8) -> Register {
-        match code {
-            0 => Register::B,
-            1 => Register::C,
-            2 => Register::D,
-            3 => Register::E,
-            4 => Register::H,
-            5 => Register::L,
-            6 => Register::HL,
-            7 => Register::A,
-            _ => unreachable!(),
-        }
     }
 }
