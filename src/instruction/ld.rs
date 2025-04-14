@@ -42,3 +42,16 @@ pub fn r8_r8(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.set_register(dst, cpu.get_register(src));
     cpu.pc += 1;
 }
+
+pub fn addr_of_r16_a(cpu: &mut cpu::CPU, opcode: u8) {
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+    let addr = cpu.get_register_pair(pair);
+    let value = cpu.get_register(util::Register::A);
+
+    match cpu.bus.borrow_mut().rom_write_byte(addr, value) {
+        Ok(()) => (),
+        Err(e) => eprintln!("{}", e)
+    }
+
+    cpu.pc +=1;
+}

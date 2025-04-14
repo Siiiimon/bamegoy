@@ -4,28 +4,6 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
     let opcode = rom.get(pc as usize).copied().unwrap();
     match opcode {
         0o00 => ("NOP".into(), 1),
-        0o01 | 0o21 | 0o41 | 0o61 => {
-            let pair = util::get_register_pair_by_code(opcode >> 4);
-            let hi = match rom.get((pc as usize) + 1) {
-                Some(byte) => byte,
-                None => {
-                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
-                    return ("???".into(), 3);
-                }
-            };
-            let lo = match rom.get((pc as usize) + 2) {
-                Some(byte) => byte,
-                None => {
-                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
-                    return ("???".into(), 3);
-                }
-            };
-            (format!("LD {} {}", pair, ((*hi as u16) << 8) | (*lo as u16)), 3)
-
-        }
-        0o11 | 0o31 | 0o51 | 0o71 => {
-            (format!("ADD HL {}", util::get_register_pair_by_code((opcode >> 4) & 0b11)), 1)
-        }
         0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
             let pair = util::get_register_pair_by_code(opcode >> 4);
             if (opcode >> 3) & 0 == 1 {
@@ -65,9 +43,35 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             let src = util::get_register_by_code(opcode & 0b111);
             (format!("LD {} {}", dst, src), 1)
         }
+        0o01 | 0o21 | 0o41 | 0o61 => {
+            let pair = util::get_register_pair_by_code(opcode >> 4);
+            let hi = match rom.get((pc as usize) + 1) {
+                Some(byte) => byte,
+                None => {
+                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
+                    return ("???".into(), 3);
+                }
+            };
+            let lo = match rom.get((pc as usize) + 2) {
+                Some(byte) => byte,
+                None => {
+                    eprintln!("Tried to read invalid ROM address: {:04X}", pc);
+                    return ("???".into(), 3);
+                }
+            };
+            (format!("LD {} {}", pair, ((*hi as u16) << 8) | (*lo as u16)), 3)
+
+        }
+        0o02 | 0o22 => {
+            let pair = util::get_register_pair_by_code(opcode >> 4);
+            (format!("LD [{}] A", pair), 1)
+        }
         0o200..=0o207 => {
             let register = util::get_register_by_code(opcode & 0b111);
             (format!("ADD A {}", register), 1)
+        }
+        0o11 | 0o31 | 0o51 | 0o71 => {
+            (format!("ADD HL {}", util::get_register_pair_by_code((opcode >> 4) & 0b11)), 1)
         }
         0o210..=0o217 => {
             let register = util::get_register_by_code(opcode & 0b111);

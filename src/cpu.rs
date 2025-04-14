@@ -87,6 +87,9 @@ impl CPU {
             0o01 | 0o21 | 0o41 | 0o61 => {
                 instruction::ld::r16_n16(self, opcode);
             }
+            0o02 | 0o22 => {
+                instruction::ld::addr_of_r16_a(self, opcode);
+            }
             0o200..=0o207 => {
                 instruction::add::r8(self, opcode);
             }
