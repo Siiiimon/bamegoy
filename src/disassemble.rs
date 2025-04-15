@@ -208,6 +208,9 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             let addr = ((opcode >> 3) & 0b111) * 8;
             (format!("RST {}", addr), 1)
         }
+        0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355 | 0o375 => {
+            (format!("DB {}", opcode), 1)
+        }
         _ => {
             (format!("UNKNOWN: 0o{:03o}", opcode), 1)
         }
