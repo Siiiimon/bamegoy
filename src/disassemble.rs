@@ -204,6 +204,10 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
                 (format!("CALL {}", conditional), 3)
             }
         }
+        0o307 | 0o317 |  0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => {
+            let addr = ((opcode >> 3) & 0b111) * 8;
+            (format!("RST {}", addr), 1)
+        }
         _ => {
             (format!("UNKNOWN: 0o{:03o}", opcode), 1)
         }

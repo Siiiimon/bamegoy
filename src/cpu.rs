@@ -192,6 +192,9 @@ impl CPU {
             0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
                 instruction::call::call(self, opcode);
             }
+            0o307 | 0o317 |  0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => {
+                instruction::rst::rst(self, opcode);
+            }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
