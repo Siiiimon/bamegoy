@@ -10,6 +10,9 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
         0o373 => {
             ("EI".into(), 1)
         }
+        0o166 => {
+            ("HALT".into(), 1)
+        }
         0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
             let pair = util::get_register_pair_by_code(opcode >> 4);
             if (opcode >> 3) & 0 == 1 {
@@ -182,7 +185,7 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
                 (format!("RET {}", conditional), 1)
             }
         }
-        0o331 => ("RETI".into(), 1)
+        0o331 => ("RETI".into(), 1),
         0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
             let conditional = match opcode >> 4 {
                 2 => "NZ",

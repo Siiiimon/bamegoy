@@ -49,6 +49,8 @@ pub struct CPU {
     pub interrupt_enable: Interrupts,
     pub interrupt_flags: Interrupts,
 
+    pub is_halting: bool,
+
     pub bus: bus::SharedBus,
 }
 
@@ -84,6 +86,10 @@ impl CPU {
             self.interrupt_master = true;
         }
 
+        if self.is_halting {
+            return;
+        }
+
         // fetch
         let opcode = match self.bus.borrow().rom_read_byte(self.pc) {
             Some(byte) => byte,
@@ -103,6 +109,9 @@ impl CPU {
             }
             0o373 => {
                 instruction::ei::ei(self);
+            }
+            0o166 => {
+                instruction::halt::halt(self);
             }
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
