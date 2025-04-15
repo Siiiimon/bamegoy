@@ -45,3 +45,19 @@ pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
 
     cpu.pc += 1;
 }
+
+pub fn sp_e8(cpu: &mut cpu::CPU) {
+    let offset = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap() as i16;
+    let sp = cpu.sp as i16;
+    cpu.sp = sp.wrapping_add(offset) as u16;
+
+    let lo_sp = cpu.sp as u8;
+    let lo_offset = offset as u8;
+
+    cpu.flags.zero = false;
+    cpu.flags.subtraction = false;
+    cpu.flags.half_carry = ((lo_sp & 0x0F) + (lo_offset & 0x0F)) > 0x0F;
+    cpu.flags.carry = ((lo_sp as u16) + (lo_offset as u16)) > 0xFF;
+
+    cpu.pc += 2;
+}
