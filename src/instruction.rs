@@ -18,3 +18,4 @@ pub mod pop;
 pub mod di;
 pub mod ei;
 pub mod halt;
+pub mod rotate;
