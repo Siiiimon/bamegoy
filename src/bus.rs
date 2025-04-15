@@ -31,17 +31,17 @@ impl Bus {
         Ok(())
     }
 
-    // pub fn rom_write_word(&mut self, addr: u16, word: u16) -> Result<(), String> {
-    //     if (addr as usize) + 1 >= self.rom.len() { return Err(format!("Address {:04X} is outside of ROM bounds", addr)); }
-    //
-    //     let hi = (word >> 8) as u8;
-    //     let lo = word as u8;
-    //
-    //     self.rom[addr as usize] = lo;
-    //     self.rom[(addr as usize) + 1] = hi;
-    //
-    //     Ok(())
-    // }
+    pub fn rom_write_word(&mut self, addr: u16, word: u16) -> Result<(), String> {
+        if (addr as usize) + 1 >= self.rom.len() { return Err(format!("Address {:04X} is outside of ROM bounds", addr)); }
+
+        let hi = (word >> 8) as u8;
+        let lo = word as u8;
+
+        self.rom[addr as usize] = lo;
+        self.rom[(addr as usize) + 1] = hi;
+
+        Ok(())
+    }
 
     pub fn from_cartridge_rom(&mut self, cart: Vec<u8>) -> Result<(), String> {
         if cart.len() > self.rom.len() { return Err(format!("Cartridge rom too big!")); }
