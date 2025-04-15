@@ -1,6 +1,7 @@
 pub mod inc;
 pub mod dec;
 pub mod ld;
+pub mod ldh;
 pub mod jump;
 pub mod add;
 pub mod adc;
