@@ -51,6 +51,16 @@ impl Bus {
         Ok(())
     }
 
+    pub fn pop_word(&mut self, sp: &mut u16) -> Result<u16, BusError> {
+        if (*sp as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(*sp)) }
+
+        let content = self.rom_read_word(*sp).ok_or(BusError::OutOfBounds(*sp))?;
+
+        *sp += 2;
+
+        Ok(content)
+    }
+
     pub fn rom_write_byte(&mut self, addr: u16, byte: u8) -> Result<(), BusError> {
         if addr as usize >= self.rom.len() { return Err(BusError::OutOfBounds(addr)); }
         self.rom[addr as usize] = byte;

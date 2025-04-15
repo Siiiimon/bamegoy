@@ -12,5 +12,5 @@ pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
     };
 
     let _ = cpu.bus.borrow_mut().push_word(&mut cpu.sp, content);
-    cpu.sp += 1;
+    cpu.pc += 1;
 }

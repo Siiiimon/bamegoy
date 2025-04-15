@@ -74,6 +74,14 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
         0o52 => (format!("LD A [HL+]"), 1),
         0o62 => (format!("LD [HL-] A"), 1),
         0o72 => (format!("LD A [HL-]"), 1),
+        0o301 | 0o321 | 0o341 | 0o361 => {
+            let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+            if pair == util::RegisterPair::SP {
+                ("POP AF".into(), 1)
+            } else {
+                (format!("POP {}", pair), 1)
+            }
+        }
         0o305 | 0o325 | 0o345 | 0o365 => {
             if (opcode >> 4) & 0b11 == 0b11 {
                 ("PUSH AF".into(), 1)

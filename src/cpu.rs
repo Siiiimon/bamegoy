@@ -97,6 +97,9 @@ impl CPU {
             0o52 => instruction::ld::a_addr_of_hl(self, true),
             0o62 => instruction::ld::addr_of_hl_a(self, false),
             0o72 => instruction::ld::a_addr_of_hl(self, false),
+            0o301 | 0o321 | 0o341 | 0o361 => {
+                instruction::pop::r16(self, opcode);
+            }
             0o305 | 0o325 | 0o345 | 0o365 => {
                 instruction::push::r16(self, opcode);
             }
@@ -163,6 +166,13 @@ impl CPU {
             | (self.flags.subtraction as u8) << 6
             | (self.flags.half_carry as u8) << 5
             | (self.flags.carry as u8) << 4
+    }
+
+    pub fn set_flags_as_byte(&mut self, content: u8) {
+        self.flags.zero = content & 0b1000_0000 != 0;
+        self.flags.subtraction = content & 0b0100_0000 != 0;
+        self.flags.half_carry = content & 0b0010_0000 != 0;
+        self.flags.carry = content & 0b0001_0000 != 0;
     }
 
     pub fn set_register(&mut self, register: Register, val: u8) {
