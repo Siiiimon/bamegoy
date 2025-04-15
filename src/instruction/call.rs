@@ -13,7 +13,7 @@ pub fn call(cpu: &mut cpu::CPU, opcode: u8) {
     };
 
     if should_jump || opcode == 0o315 {
-        cpu.bus.borrow_mut().push_word(&mut cpu.sp, cpu.pc + 3);
+        let _ = cpu.bus.borrow_mut().push_word(&mut cpu.sp, cpu.pc + 3);
         cpu.pc = ((hi as u16) << 8) | lo as u16;
     } else {
         cpu.pc += 3;

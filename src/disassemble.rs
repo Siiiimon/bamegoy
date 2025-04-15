@@ -142,7 +142,7 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
             };
             (format!("JR {}{}", conditional, offset as u8), 2)
         }
-        0o351 => (format!("JP HL"), 2)
+        0o351 => (format!("JP HL"), 2),
         0o302 | 0o303 | 0o312 | 0o322 | 0o332  => {
             let lo = rom.get((pc + 1) as usize).unwrap();
             let hi = rom.get((pc + 2) as usize).unwrap();

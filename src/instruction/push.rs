@@ -6,7 +6,7 @@ pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
     let content = if pair == util::RegisterPair::SP {
         let hi = cpu.get_register(util::Register::A);
         let lo = cpu.get_flags_as_byte();
-        ((hi << 8) | lo) as u16
+        ((hi as u16) << 8) | lo as u16
     } else {
         cpu.get_register_pair(pair)
     };
