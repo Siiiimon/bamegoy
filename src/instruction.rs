@@ -19,3 +19,4 @@ pub mod di;
 pub mod ei;
 pub mod halt;
 pub mod rotate;
+pub mod carry;

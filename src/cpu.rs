@@ -191,6 +191,8 @@ impl CPU {
             0o17 => instruction::rotate::rrca(self),
             0o27 => instruction::rotate::rla(self),
             0o37 => instruction::rotate::rra(self),
+            0o67 => instruction::carry::scf(self),
+            0o77 => instruction::carry::ccf(self),
             0o376 => instruction::cp::a_n8(self),
             0o30 | 0o40 | 0o50 | 0o60 | 0o70 => {
                 instruction::jump::e8(self, opcode);
