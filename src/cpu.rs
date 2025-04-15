@@ -175,15 +175,19 @@ impl CPU {
             0o240..=0o247 => {
                 instruction::and::r8(self, opcode);
             }
+            0o346 => instruction::and::a_n8(self),
             0o250..=0o257 => {
                 instruction::xor::r8(self, opcode);
             }
+            0o356 => instruction::xor::a_n8(self),
             0o260..=0o267 => {
                 instruction::or::r8(self, opcode);
             }
+            0o366 => instruction::or::a_n8(self),
             0o270..=0o277 => {
                 instruction::cp::r8(self, opcode);
             }
+            0o376 => instruction::cp::a_n8(self),
             0o30 | 0o40 | 0o50 | 0o60 | 0o70 => {
                 instruction::jump::e8(self, opcode);
             }
