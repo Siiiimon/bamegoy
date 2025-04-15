@@ -126,3 +126,22 @@ pub fn a16_sp(cpu: &mut cpu::CPU) {
     let _ = cpu.bus.borrow_mut().rom_write_word(addr, sp);
     cpu.pc += 3;
 }
+
+pub fn hl_sp_e8(cpu: &mut cpu::CPU) {
+    let sp = cpu.sp;
+    let offset = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap() as i8 as i16;
+
+    let result = (sp as i16).wrapping_add(offset) as u16;
+    cpu.set_register_pair(util::RegisterPair::HL, result);
+
+    let lo_sp = sp & 0xFF;
+    let lo_offset = offset as u16 & 0xFF;
+
+    cpu.flags.zero = false;
+    cpu.flags.subtraction = false;
+    cpu.flags.half_carry = ((lo_sp ^ lo_offset ^ (lo_sp + lo_offset)) & 0x10) == 0x10;
+    cpu.flags.carry = ((lo_sp ^ lo_offset ^ (lo_sp + lo_offset)) & 0x100) == 0x100;
+
+    cpu.pc += 2;
+}
+
