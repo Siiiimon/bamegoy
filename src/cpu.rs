@@ -147,6 +147,8 @@ impl CPU {
             0o52 => instruction::ld::a_addr_of_hl(self, true),
             0o62 => instruction::ld::addr_of_hl_a(self, false),
             0o72 => instruction::ld::a_addr_of_hl(self, false),
+            0o352 => instruction::ld::a16_a(self),
+            0o372 => instruction::ld::a_a16(self),
             0o301 | 0o321 | 0o341 | 0o361 => {
                 instruction::pop::r16(self, opcode);
             }

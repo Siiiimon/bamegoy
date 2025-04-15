@@ -100,3 +100,21 @@ pub fn a_addr_of_hl(cpu: &mut cpu::CPU, should_increase: bool) {
 
     cpu.pc += 1;
 }
+
+pub fn a16_a(cpu: &mut cpu::CPU) {
+    let addr = cpu.bus.borrow().rom_read_word(cpu.pc + 1).unwrap();
+    let content = cpu.get_register(util::Register::A);
+
+    let _ = cpu.bus.borrow_mut().rom_write_byte(addr, content);
+
+    cpu.pc += 3;
+}
+
+pub fn a_a16(cpu: &mut cpu::CPU) {
+    let addr = cpu.bus.borrow().rom_read_word(cpu.pc + 1).unwrap();
+    let content = cpu.bus.borrow().rom_read_byte(addr).unwrap();
+
+    cpu.set_register(util::Register::A, content);
+
+    cpu.pc += 3;
+}
