@@ -171,6 +171,7 @@ impl CPU {
             0o230..=0o237 => {
                 instruction::sbc::r8(self, opcode);
             }
+            0o336 => instruction::sbc::a_n8(self),
             0o240..=0o247 => {
                 instruction::and::r8(self, opcode);
             }

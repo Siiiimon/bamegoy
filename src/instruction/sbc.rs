@@ -19,3 +19,19 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc += 1;
 }
 
+pub fn a_n8(cpu: &mut cpu::CPU) {
+    let a = cpu.get_register(util::Register::A);
+    let x = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap();
+
+    let carry = cpu.flags.carry as u8;
+
+    let value = a.wrapping_sub(x).wrapping_sub(carry);
+    cpu.set_register(util::Register::A, value);
+
+    cpu.flags.zero = value == 0;
+    cpu.flags.subtraction = true;
+    cpu.flags.half_carry = (a & 0x0F) < ((x & 0x0F) + carry);
+    cpu.flags.carry = (a as u16) < (x as u16 + carry as u16);
+
+    cpu.pc += 2;
+}
