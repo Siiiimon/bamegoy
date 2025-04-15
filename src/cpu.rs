@@ -76,6 +76,7 @@ impl CPU {
             ie_enable_delay: false,
             interrupt_enable: Interrupts::default(),
             interrupt_flags: Interrupts::default(),
+            is_halting: false,
             bus,
         }
     }
