@@ -107,7 +107,7 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
         }
         0o306 => {
             let immediate = rom.get((pc as usize) + 1).unwrap();
-            (format!("ADD A {}", immediate), 1)
+            (format!("ADD A {}", immediate), 2)
         }
         0o11 | 0o31 | 0o51 | 0o71 => {
             (format!("ADD HL {}", util::get_register_pair_by_code((opcode >> 4) & 0b11)), 1)
@@ -115,6 +115,10 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
         0o210..=0o217 => {
             let register = util::get_register_by_code(opcode & 0b111);
             (format!("ADC A {}", register), 1)
+        }
+        0o316 => {
+            let immediate = rom.get((pc as usize) + 1).unwrap();
+            (format!("ADC A {}", immediate), 2)
         }
         0o220..=0o227 => {
             let register = util::get_register_by_code(opcode & 0b111);

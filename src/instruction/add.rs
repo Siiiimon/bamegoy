@@ -28,7 +28,7 @@ pub fn a_n8(cpu: &mut cpu::CPU) {
     cpu.flags.carry = value < a;
     cpu.flags.half_carry = (a & 0x0F) + (x & 0x0F) > 0x0F;
 
-    cpu.pc += 1;
+    cpu.pc += 2;
 }
 
 pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
