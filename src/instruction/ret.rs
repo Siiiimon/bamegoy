@@ -18,7 +18,10 @@ pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
         _ => false,
     };
 
-    if should_jump || opcode == 0o311 {
+    if should_jump || opcode == 0o311 | 0o331 {
+        if opcode == 0o331 {
+            cpu.interrupt_master = true;
+        }
         cpu.pc = addr;
     } else {
         cpu.pc += 1;
