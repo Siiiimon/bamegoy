@@ -16,6 +16,21 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc += 1;
 }
 
+pub fn a_n8(cpu: &mut cpu::CPU) {
+    let a = cpu.get_register(util::Register::A);
+    let x = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap();
+
+    let value = a.wrapping_add(x);
+    cpu.set_register(util::Register::A, value);
+
+    cpu.flags.zero = value == 0;
+    cpu.flags.subtraction = false;
+    cpu.flags.carry = value < a;
+    cpu.flags.half_carry = (a & 0x0F) + (x & 0x0F) > 0x0F;
+
+    cpu.pc += 1;
+}
+
 pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let hl = cpu.get_register_pair(util::RegisterPair::HL);
