@@ -10,6 +10,9 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
         0o373 => {
             ("EI".into(), 1)
         }
+        0o20 => {
+            ("STOP".into(), 1)
+        }
         0o166 => {
             ("HALT".into(), 1)
         }

@@ -110,7 +110,7 @@ impl CPU {
             0o373 => {
                 instruction::ei::ei(self);
             }
-            0o166 => {
+            0o166 | 0o20 => {
                 instruction::halt::halt(self);
             }
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
