@@ -137,6 +137,9 @@ impl CPU {
             0o302 | 0o303 | 0o312 | 0o322 | 0o332 => {
                 instruction::jump::a16(self, opcode);
             }
+            0o300 | 0o310 | 0o311 | 0o320 | 0o330 => {
+                instruction::ret::ret(self, opcode);
+            }
             0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
                 instruction::call::call(self, opcode);
             }

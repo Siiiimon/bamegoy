@@ -161,6 +161,36 @@ pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
                 (format!("JP {} {:04X}", conditional, ((*hi as u16) << 8) | *lo as u16), 3)
             }
         }
+        0o300 | 0o310 | 0o311 | 0o320 | 0o330 => {
+            let conditional = match opcode >> 4 {
+                2 => "NZ",
+                3 => "Z",
+                4 => "NC",
+                5 => "C",
+                _ => "???",
+            };
+
+            if opcode == 0o311 {
+                ("RET".into(), 1)
+            } else {
+                (format!("RET {}", conditional), 1)
+            }
+        }
+        0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
+            let conditional = match opcode >> 4 {
+                2 => "NZ",
+                3 => "Z",
+                4 => "NC",
+                5 => "C",
+                _ => "???",
+            };
+
+            if opcode == 0o315 {
+                ("CALL".into(), 3)
+            } else {
+                (format!("CALL {}", conditional), 3)
+            }
+        }
         _ => {
             (format!("UNKNOWN: 0o{:03o}", opcode), 1)
         }
