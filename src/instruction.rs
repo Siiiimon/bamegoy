@@ -14,3 +14,5 @@ pub mod call;
 pub mod ret;
 pub mod push;
 pub mod pop;
+pub mod di;
+pub mod ei;

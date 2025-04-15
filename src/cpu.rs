@@ -11,6 +11,26 @@ pub struct Flags {
     pub carry: bool,
 }
 
+pub struct Interrupts {
+    pub vblank: bool,
+    pub lcd: bool,
+    pub timer: bool,
+    pub serial: bool,
+    pub joypad: bool,
+}
+
+impl Default for Interrupts {
+    fn default() -> Self {
+        Self {
+            vblank: false,
+            lcd: false,
+            timer: false,
+            serial: false,
+            joypad: false,
+        }
+    }
+}
+
 pub struct CPU {
     pub a: u8,
     pub b: u8,
@@ -23,6 +43,11 @@ pub struct CPU {
 
     pub sp: u16,
     pub pc: u16,
+
+    pub interrupt_master: bool,
+    pub ie_enable_delay: bool,
+    pub interrupt_enable: Interrupts,
+    pub interrupt_flags: Interrupts,
 
     pub bus: bus::SharedBus,
 }
@@ -45,11 +70,20 @@ impl CPU {
             },
             sp: 0,
             pc: 0x0100,
+            interrupt_master: false,
+            ie_enable_delay: false,
+            interrupt_enable: Interrupts::default(),
+            interrupt_flags: Interrupts::default(),
             bus,
         }
     }
 
     pub fn step(&mut self) {
+        if self.ie_enable_delay {
+            self.ie_enable_delay = false;
+            self.interrupt_master = true;
+        }
+
         // fetch
         let opcode = match self.bus.borrow().rom_read_byte(self.pc) {
             Some(byte) => byte,
@@ -63,6 +97,12 @@ impl CPU {
         match opcode {
             0x00 => {
                 self.pc += 1;
+            }
+            0o363 => {
+                instruction::di::di(self);
+            }
+            0o373 => {
+                instruction::ei::ei(self);
             }
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
