@@ -118,3 +118,11 @@ pub fn a_a16(cpu: &mut cpu::CPU) {
 
     cpu.pc += 3;
 }
+
+pub fn a16_sp(cpu: &mut cpu::CPU) {
+    let addr = cpu.bus.borrow().rom_read_word(cpu.pc + 1).unwrap();
+    let sp = cpu.get_register_pair(util::RegisterPair::SP);
+
+    let _ = cpu.bus.borrow_mut().rom_write_word(addr, sp);
+    cpu.pc += 3;
+}
