@@ -153,6 +153,8 @@ impl CPU {
             0o370 => instruction::ld::hl_sp_e8(self),
             0o340 => instruction::ldh::a8_a(self),
             0o360 => instruction::ldh::a_a8(self),
+            0o342 => instruction::ldh::c_a(self),
+            0o362 => instruction::ldh::a_c(self),
             0o301 | 0o321 | 0o341 | 0o361 => {
                 instruction::pop::r16(self, opcode);
             }
