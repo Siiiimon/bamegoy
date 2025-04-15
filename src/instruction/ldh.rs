@@ -22,7 +22,7 @@ pub fn c_a(cpu: &mut cpu::CPU) {
     let value = cpu.get_register(util::Register::A);
     let offset = cpu.get_register(util::Register::C);
 
-    let _ = cpu.bus.borrow_mut().rom_write_byte((0xFF00 + offset) as u16, value);
+    let _ = cpu.bus.borrow_mut().rom_write_byte(0xFF00 + offset as u16, value);
 
     cpu.pc += 1;
 }
