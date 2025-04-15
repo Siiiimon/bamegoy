@@ -97,6 +97,9 @@ impl CPU {
             0o52 => instruction::ld::a_addr_of_hl(self, true),
             0o62 => instruction::ld::addr_of_hl_a(self, false),
             0o72 => instruction::ld::a_addr_of_hl(self, false),
+            0o305 | 0o325 | 0o345 | 0o365 => {
+                instruction::push::r16(self, opcode);
+            }
             0o200..=0o207 => {
                 instruction::add::r8(self, opcode);
             }
@@ -131,9 +134,7 @@ impl CPU {
             0o302 | 0o303 | 0o312 | 0o322 | 0o332 => {
                 instruction::jump::a16(self, opcode);
             }
-            0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
-
-            }
+            0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {}
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
@@ -155,6 +156,13 @@ impl CPU {
                 .rom_read_byte(((self.h as u16) << 8) | (self.l as u16))
                 .unwrap(),
         }
+    }
+
+    pub fn get_flags_as_byte(&self) -> u8 {
+        (self.flags.zero as u8) << 7
+            | (self.flags.subtraction as u8) << 6
+            | (self.flags.half_carry as u8) << 5
+            | (self.flags.carry as u8) << 4
     }
 
     pub fn set_register(&mut self, register: Register, val: u8) {

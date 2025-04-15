@@ -11,3 +11,4 @@ pub mod xor;
 pub mod or;
 pub mod cp;
 pub mod call;
+pub mod push;

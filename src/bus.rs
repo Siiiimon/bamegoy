@@ -2,6 +2,23 @@ use std::{cell::RefCell, rc::Rc};
 
 pub type SharedBus = Rc<RefCell<Bus>>;
 
+#[derive(Debug)]
+pub enum BusError {
+    OutOfBounds(u16),
+}
+
+impl std::fmt::Display for BusError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BusError::OutOfBounds(addr) => {
+                write!(f, "Address {:04X} is outside of ROM bounds", addr)
+            }
+        }
+    }
+}
+
+impl std::error::Error for BusError {}
+
 pub struct Bus {
     pub rom: Vec<u8> // bank 0 and bank 1+ as one array
 }
@@ -25,14 +42,23 @@ impl Bus {
         Some((hi << 8) | lo)
     }
 
-    pub fn rom_write_byte(&mut self, addr: u16, byte: u8) -> Result<(), String> {
-        if addr as usize > self.rom.len() { return Err(format!("Address {:04X} is outside of ROM bounds", addr)); }
+    pub fn push_word(&mut self, sp: &mut u16, content: u16) -> Result<(), BusError> {
+        *sp -= 2;
+
+        if (*sp as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(*sp)) }
+        self.rom_write_word(*sp, content)?;
+
+        Ok(())
+    }
+
+    pub fn rom_write_byte(&mut self, addr: u16, byte: u8) -> Result<(), BusError> {
+        if addr as usize >= self.rom.len() { return Err(BusError::OutOfBounds(addr)); }
         self.rom[addr as usize] = byte;
         Ok(())
     }
 
-    pub fn rom_write_word(&mut self, addr: u16, word: u16) -> Result<(), String> {
-        if (addr as usize) + 1 >= self.rom.len() { return Err(format!("Address {:04X} is outside of ROM bounds", addr)); }
+    pub fn rom_write_word(&mut self, addr: u16, word: u16) -> Result<(), BusError> {
+        if (addr as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(addr)); }
 
         let hi = (word >> 8) as u8;
         let lo = word as u8;
