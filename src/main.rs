@@ -143,7 +143,7 @@ impl eframe::App for BamegoyApp {
             .default_height(250.0)
             .resizable(true)
             .show(ctx, |ui| {
-                ui.heading("ROM Viewer");
+                ui.heading("Memory");
 
                 egui::ScrollArea::vertical().show_rows(
                     ui,
