@@ -1,4 +1,4 @@
-use crate::{cpu, util};
+use crate::{cpu, disassemble::Disasm, util};
 
 pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
     let register = util::get_register_by_code(opcode & 0b111);
@@ -28,3 +28,26 @@ pub fn a_n8(cpu: &mut cpu::CPU) {
 
     cpu.pc += 2;
 }
+
+pub fn r8_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    let register = util::get_register_by_code(opcode & 0b111);
+
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: format!("CP {}", register),
+    })
+}
+
+pub fn a_n8_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    let imm = *mem.get(addr as usize + 1)?;
+
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode, imm],
+        length: 2,
+        mnemonic: format!("CP ${:02X}", imm),
+    })
+}
+

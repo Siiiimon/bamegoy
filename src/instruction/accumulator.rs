@@ -1,4 +1,4 @@
-use crate::{cpu, util};
+use crate::{cpu, disassemble::Disasm, util};
 
 pub fn cpl(cpu: &mut cpu::CPU) {
     let value = cpu.get_register(util::Register::A);
@@ -38,4 +38,22 @@ pub fn daa(cpu: &mut cpu::CPU) {
     cpu.flags.half_carry = false;
 
     cpu.pc += 1;
+}
+
+pub fn cpl_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "CPL".into(),
+    })
+}
+
+pub fn daa_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "DAA".into(),
+    })
 }

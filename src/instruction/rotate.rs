@@ -1,4 +1,4 @@
-use crate::{cpu, util};
+use crate::{cpu, disassemble::Disasm, util};
 
 pub fn rlca(cpu: &mut cpu::CPU) {
     let value = cpu.get_register(util::Register::A);
@@ -50,4 +50,40 @@ pub fn rrca(cpu: &mut cpu::CPU) {
     cpu.flags.carry = value & 1 != 0;
 
     cpu.pc += 1;
+}
+
+pub fn rlca_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "RLCA".into(),
+    })
+}
+
+pub fn rla_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "RLA".into(),
+    })
+}
+
+pub fn rra_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "RRA".into(),
+    })
+}
+
+pub fn rrca_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "RRCA".into(),
+    })
 }

@@ -1,4 +1,4 @@
-use crate::{cpu, util};
+use crate::{cpu, disassemble::Disasm, util};
 
 pub fn a8_a(cpu: &mut cpu::CPU) {
     let value = cpu.get_register(util::Register::A);
@@ -36,3 +36,42 @@ pub fn a_c(cpu: &mut cpu::CPU) {
     cpu.pc += 1;
 }
 
+pub fn a8_a_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    let offset = *mem.get((addr + 1) as usize)?;
+
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode, offset],
+        length: 2,
+        mnemonic: format!("LDH ($FF{:02X}), A", offset),
+    })
+}
+
+pub fn a_a8_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    let offset = *mem.get((addr + 1) as usize)?;
+
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode, offset],
+        length: 2,
+        mnemonic: format!("LDH A, ($FF{:02X})", offset),
+    })
+}
+
+pub fn c_a_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "LDH ($FF00+C), A".into(),
+    })
+}
+
+pub fn a_c_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+    Some(Disasm {
+        address: addr,
+        bytes: vec![opcode],
+        length: 1,
+        mnemonic: "LDH A, ($FF00+C)".into(),
+    })
+}

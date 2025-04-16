@@ -51,9 +51,9 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
 
     ui.separator();
     ui.label("current instruction:");
-    let (mnemonic, _) = disassemble(&bus.borrow().rom, cpu.pc);
-    ui.monospace(mnemonic);
-}
+    if let Some(disasm) = disassemble(&bus.borrow().rom, cpu.pc) {
+        ui.monospace(disasm.mnemonic);
+    }}
 
 pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
     ui.heading("Memory");
@@ -113,11 +113,11 @@ pub fn draw_disassembly_panel(
 
     while pc < rom.len() {
         pc_lookup.push(pc);
-        let (_, size) = disassemble(rom, pc as u16);
+        let disasm = disassemble(rom, pc as u16).unwrap();
         if pc == cpu.pc as usize {
             ui_state.current_instruction_index = instruction_counter;
         }
-        pc += size as usize;
+        pc += disasm.length as usize;
         instruction_counter += 1;
     }
 
@@ -142,9 +142,9 @@ pub fn draw_disassembly_panel(
         scroll_area.show_rows(ui, row_height, pc_lookup.len(), |ui, range| {
             for row in range {
                 let pc = pc_lookup[row];
-                let (instr, _) = disassemble(rom, pc as u16);
+                let disasm = disassemble(rom, pc as u16).unwrap();
 
-                let text = RichText::new(format!("{:04X}: {}", pc, instr)).monospace();
+                let text = RichText::new(format!("{:04X}: {}", pc, disasm.mnemonic)).monospace();
 
                 if pc == cpu.pc as usize {
                     ui.label(text.background_color(egui::Color32::from_gray(40)));
