@@ -54,7 +54,7 @@ struct BamegoyApp {
 }
 
 impl BamegoyApp {
-    pub fn new(rom_filepath: Option<&Path>) -> Self {
+    pub fn new(rom_filepath: Option<&Path>, should_trace_log: bool) -> Self {
         let cartridge_rom: Vec<u8> = match rom_filepath {
             Some(p) => match fs::read(p) {
                 Err(e) => {
@@ -77,9 +77,9 @@ impl BamegoyApp {
 
         Self {
             bus: b.clone(),
-            cpu: cpu::CPU::new(b.clone()),
+            cpu: cpu::CPU::new(b.clone(), should_trace_log),
             ui_state: UiState::default(),
-            emulator_state: EmulatorState { run_state: RunState::Paused, last_step_time: Instant::now(), step_interval: Duration::from_millis(500) }
+            emulator_state: EmulatorState { run_state: RunState::Paused, last_step_time: Instant::now(), step_interval: Duration::from_millis(500) },
         }
     }
 }
@@ -87,6 +87,14 @@ impl BamegoyApp {
 fn main() -> eframe::Result {
     env_logger::init();
     let args: Vec<String> = env::args().collect();
+
+    let mut should_trace_log = false;
+    for arg in env::args().skip(1) {
+        if arg == "--trace" {
+            should_trace_log = true;
+        }
+    }
+
     let rom_filepath: Option<&Path> = match args.get(1) {
         Some(p) => Some(Path::new(p)),
         None => None,
@@ -101,13 +109,14 @@ fn main() -> eframe::Result {
         Box::new(|cc| {
             egui_extras::install_image_loaders(&cc.egui_ctx);
 
-            Ok(Box::new(BamegoyApp::new(rom_filepath)))
+            Ok(Box::new(BamegoyApp::new(rom_filepath, should_trace_log)))
         }),
     )
 }
 
 impl eframe::App for BamegoyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+
         if self.emulator_state.run_state == RunState::Running {
             let now = Instant::now();
             if now.duration_since(self.emulator_state.last_step_time) >= self.emulator_state.step_interval {

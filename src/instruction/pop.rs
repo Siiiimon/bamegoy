@@ -1,3 +1,4 @@
+use crate::bus;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
@@ -14,7 +15,7 @@ pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc += 1;
 }
 
-pub fn r16_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
 
     Some(Disasm{

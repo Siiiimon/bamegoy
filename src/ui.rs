@@ -58,7 +58,7 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
 
     ui.separator();
     ui.label("current instruction:");
-    if let Some(disasm) = disassemble(&bus.borrow().rom, cpu.pc) {
+    if let Some(disasm) = disassemble(&bus.borrow(), cpu.pc) {
         ui.monospace(disasm.mnemonic);
     }}
 
@@ -112,15 +112,13 @@ pub fn draw_disassembly_panel(
         );
     });
 
-    let rom = &bus.borrow().rom;
-
     let mut pc_lookup = vec![];
     let mut pc = 0x0000;
     let mut instruction_counter = 0;
 
-    while pc < rom.len() {
+    while pc < bus.borrow().rom.len() {
         pc_lookup.push(pc);
-        let disasm = disassemble(rom, pc as u16).unwrap();
+        let disasm = disassemble(&bus.borrow(), pc as u16).unwrap();
         if pc == cpu.pc as usize {
             ui_state.current_instruction_index = instruction_counter;
         }
@@ -149,7 +147,7 @@ pub fn draw_disassembly_panel(
         scroll_area.show_rows(ui, row_height, pc_lookup.len(), |ui, range| {
             for row in range {
                 let pc = pc_lookup[row];
-                let disasm = disassemble(rom, pc as u16).unwrap();
+                let disasm = disassemble(&bus.borrow(), pc as u16).unwrap();
 
                 let text = RichText::new(format!("{:04X}: {}", pc, disasm.mnemonic)).monospace();
 

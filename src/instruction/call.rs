@@ -1,4 +1,4 @@
-use crate::{cpu, disassemble::Disasm};
+use crate::{bus, cpu, disassemble::Disasm};
 
 pub fn call(cpu: &mut cpu::CPU, opcode: u8) {
     let lo = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
@@ -20,14 +20,8 @@ pub fn call(cpu: &mut cpu::CPU, opcode: u8) {
     }
 }
 
-pub fn call_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
-    if (addr as usize) + 2 >= mem.len() {
-        return None;
-    }
-
-    let lo = mem[(addr + 1) as usize];
-    let hi = mem[(addr + 2) as usize];
-    let target = ((hi as u16) << 8) | lo as u16;
+pub fn call_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+    let target = bus.read_word(addr + 1).unwrap();
 
     let mnemonic = match opcode {
         0xCD => format!("CALL ${:04X}", target),
@@ -40,7 +34,7 @@ pub fn call_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
 
     Some(Disasm {
         address: addr,
-        bytes: mem[addr as usize..=(addr + 2) as usize].to_vec(),
+        bytes: vec![opcode, target as u8, (target >> 8) as u8],
         length: 3,
         mnemonic,
     })

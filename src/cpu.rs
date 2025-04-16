@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble;
 use crate::instruction;
 use crate::util::Register;
 use crate::util::RegisterPair;
@@ -49,10 +50,12 @@ pub struct CPU {
     pub is_halting: bool,
 
     pub bus: bus::SharedBus,
+
+    should_trace_log: bool,
 }
 
 impl CPU {
-    pub fn new(bus: bus::SharedBus) -> Self {
+    pub fn new(bus: bus::SharedBus, should_trace_log: bool) -> Self {
         Self {
             a: 0x01,
             b: 0x00,
@@ -72,11 +75,12 @@ impl CPU {
             ie_enable_delay: false,
             is_halting: false,
             bus,
+            should_trace_log,
         }
     }
 
     pub fn reset(&mut self, bus: bus::SharedBus) {
-        *self = CPU::new(bus);
+        *self = CPU::new(bus, self.should_trace_log);
     }
 
     pub fn step(&mut self) {
@@ -227,6 +231,25 @@ impl CPU {
             }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
+            }
+        }
+
+        if self.should_trace_log {
+            if let Some(disasm) = disassemble(&self.bus.borrow(), self.pc) {
+                println!(
+                    "{:04X}: {:<12} | A:{:02X} F:{}{}{}{} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X}",
+                    disasm.address,
+                    disasm.mnemonic,
+                    self.a,
+                    if self.flags.zero { "Z" } else { "-" },
+                    if self.flags.subtraction { "N" } else { "-" },
+                    if self.flags.half_carry { "H" } else { "-" },
+                    if self.flags.carry { "C" } else { "-" },
+                    self.b, self.c, self.d, self.e, self.h, self.l,
+                    self.sp,
+                );
+            } else {
+                println!("{:04X}: <undisassembled>", self.pc);
             }
         }
     }

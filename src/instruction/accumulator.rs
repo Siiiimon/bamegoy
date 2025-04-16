@@ -1,3 +1,4 @@
+use crate::bus;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn cpl(cpu: &mut cpu::CPU) {
@@ -40,7 +41,7 @@ pub fn daa(cpu: &mut cpu::CPU) {
     cpu.pc += 1;
 }
 
-pub fn cpl_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn cpl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],
@@ -49,7 +50,7 @@ pub fn cpl_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn daa_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn daa_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

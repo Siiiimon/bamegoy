@@ -1,4 +1,4 @@
-use crate::{cpu, disassemble::Disasm, util};
+use crate::{bus, cpu, disassemble::Disasm, util};
 
 pub fn a8_a(cpu: &mut cpu::CPU) {
     let value = cpu.get_register(util::Register::A);
@@ -36,8 +36,8 @@ pub fn a_c(cpu: &mut cpu::CPU) {
     cpu.pc += 1;
 }
 
-pub fn a8_a_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
-    let offset = *mem.get((addr + 1) as usize)?;
+pub fn a8_a_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+    let offset = bus.read_byte(addr + 1).unwrap();
 
     Some(Disasm {
         address: addr,
@@ -47,8 +47,8 @@ pub fn a8_a_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn a_a8_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
-    let offset = *mem.get((addr + 1) as usize)?;
+pub fn a_a8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+    let offset = bus.read_byte(addr + 1).unwrap();
 
     Some(Disasm {
         address: addr,
@@ -58,7 +58,7 @@ pub fn a_a8_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn c_a_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn c_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],
@@ -67,7 +67,7 @@ pub fn c_a_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn a_c_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_c_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

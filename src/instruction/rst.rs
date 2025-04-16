@@ -1,3 +1,4 @@
+use crate::bus;
 use crate::{cpu, disassemble::Disasm};
 
 pub fn rst(cpu: &mut cpu::CPU, opcode: u8) {
@@ -7,7 +8,7 @@ pub fn rst(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc = addr as u16;
 }
 
-pub fn rst_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn rst_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let target = ((opcode >> 3) & 0b111) * 8;
 
     Some(Disasm {

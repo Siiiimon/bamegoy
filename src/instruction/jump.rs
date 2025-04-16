@@ -1,3 +1,4 @@
+use crate::bus;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
@@ -43,10 +44,8 @@ pub fn hl(cpu: &mut cpu::CPU) {
     cpu.pc = addr;
 }
 
-pub fn a16_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
-    let lo = *mem.get(addr as usize + 1)?;
-    let hi = *mem.get(addr as usize + 2)?;
-    let target = ((hi as u16) << 8) | lo as u16;
+pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+    let target = bus.read_word(addr).unwrap();
 
     let mnemonic = match opcode {
         0xC3 => format!("JP ${:04X}", target),
@@ -59,14 +58,14 @@ pub fn a16_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
 
     Some(Disasm {
         address: addr,
-        bytes: vec![opcode, lo, hi],
+        bytes: vec![opcode, target as u8, (target >> 8) as u8],
         length: 3,
         mnemonic,
     })
 }
 
-pub fn e8_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
-    let offset = *mem.get(addr as usize + 1)? as i8;
+pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+    let offset = bus.read_byte(addr + 1).unwrap();
     let target = addr.wrapping_add(2).wrapping_add(offset as u16);
 
     let mnemonic = match opcode {
@@ -86,7 +85,7 @@ pub fn e8_disasm(mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn hl_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn hl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

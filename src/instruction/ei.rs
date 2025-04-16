@@ -1,3 +1,4 @@
+use crate::bus;
 use crate::{cpu, disassemble::Disasm};
 
 pub fn ei(cpu: &mut cpu::CPU) {
@@ -5,7 +6,7 @@ pub fn ei(cpu: &mut cpu::CPU) {
     cpu.pc += 1;
 }
 
-pub fn ei_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn ei_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

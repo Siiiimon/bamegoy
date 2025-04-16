@@ -1,3 +1,4 @@
+use crate::bus;
 use crate::{cpu, disassemble::Disasm};
 
 pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
@@ -28,7 +29,7 @@ pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
     }
 }
 
-pub fn ret_disasm(_mem: &[u8], addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn ret_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let mnemonic = match opcode {
         0xC9 => "RET".to_string(),
         0xC0 => "RET NZ".to_string(),
