@@ -178,4 +178,6 @@ pub fn draw_serial_panel(ui: &mut egui::Ui, serial: &serial::Serial) {
     });
     ui.label(format!("SB Register: 0x{:02X}", serial.content));
     ui.separator();
+    let text = String::from_utf8_lossy(serial.outgoing.as_slice());
+    ui.label(text);
 }

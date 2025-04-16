@@ -2,7 +2,7 @@ RGBASM  = rgbasm
 RGBLINK = rgblink
 RGBFIX  = rgbfix
 
-ROM_NAME = incdecloop
+ROM_NAME = incdecloop serial
 ASM_FILE = $(ROM_NAME).asm
 OBJ_FILE = $(ROM_NAME).obj
 GB_FILE  = $(ROM_NAME).gb

@@ -5,6 +5,7 @@ use super::{IOReadable, IOWritable};
 pub struct Serial {
     pub content: u8,
     pub control: Control,
+    pub outgoing: Vec<u8>,
 }
 
 #[derive(Default)]
@@ -27,6 +28,7 @@ impl IOWritable for Serial {
     fn write(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
         if addr == 0xFF01 {
             self.content = content;
+            self.outgoing.push(content);
         }
         self.control.set(content);
         Ok(())
