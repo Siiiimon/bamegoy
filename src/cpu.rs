@@ -75,6 +75,10 @@ impl CPU {
         }
     }
 
+    pub fn reset(&mut self, bus: bus::SharedBus) {
+        *self = CPU::new(bus);
+    }
+
     pub fn step(&mut self) {
         if self.ie_enable_delay {
             self.ie_enable_delay = false;
