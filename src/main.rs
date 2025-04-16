@@ -111,7 +111,7 @@ impl eframe::App for BamegoyApp {
                         draw_memory_panel(ui, &self.cpu, &mut self.bus);
                     }
                     1 => {
-                        draw_serial_panel(ui, &self.bus.borrow().io.serial);
+                        draw_serial_panel(ui, &self.bus.borrow().serial);
                     }
                     _ => unreachable!()
                 }

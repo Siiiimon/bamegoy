@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 use error::BusError;
+use io::interrupts::InterruptKind;
 
 mod error;
 pub mod io;
@@ -11,7 +12,8 @@ pub struct Bus {
     vram: Box<[u8]>,
     ram: Box<[u8]>,
     oam: Box<[u8]>,
-    pub io: io::IORegisters,
+    pub serial: io::serial::Serial,
+    pub interrupts: io::interrupts::Interrupts,
     high_ram: Box<[u8]>,
 }
 
@@ -22,7 +24,9 @@ impl Bus {
             vram: vec![0; 0x2000].into_boxed_slice(),
             ram: vec![0; 0x4000].into_boxed_slice(),
             oam: vec![0; 0xA0].into_boxed_slice(),
-            io: io::IORegisters::new(),
+            // io registers
+            serial: io::serial::Serial::default(),
+            interrupts: io::interrupts::Interrupts::default(),
             high_ram: vec![0; 127].into_boxed_slice(),
         }
     }
@@ -42,7 +46,11 @@ impl Bus {
                 Self::mem_read(&self.oam, addr - 0xFE00)
             }
             0xFF00..0xFF80 => {
-                self.io.read(addr)
+                match addr {
+                    0xFF01 | 0xFF02 => self.serial.read(addr),
+                    0xFF0F | 0xFFFF => self.interrupts.read(addr),
+                    _ => Err(BusError::Unimplemented(addr))
+                }
             }
             0xFF80..=0xFFFE => {
                 Self::mem_read(&self.high_ram, addr - 0xFF80)
@@ -66,7 +74,14 @@ impl Bus {
                 Self::mem_write(&mut self.oam, addr - 0xFE00, content)
             }
             0xFF00..0xFF80 => {
-                self.io.write(addr - 0xFF00, content)
+                match addr {
+                    0xFF01 | 0xFF02 => {
+                        let serial_int = &mut self.interrupts.get_mut(InterruptKind::Serial);
+                        self.serial.write(addr, content, serial_int)
+                    }
+                    0xFF0F | 0xFFFF => self.interrupts.write(addr, content),
+                    _ => Err(BusError::Unimplemented(addr))
+                }
             }
             0xFF80..0xFFFD => {
                 Self::mem_write(&mut self.high_ram, addr - 0xFF80, content)

@@ -82,7 +82,7 @@ impl CPU {
     pub fn step(&mut self) {
         if self.ie_enable_delay {
             self.ie_enable_delay = false;
-            self.bus.borrow_mut().io.interrupts.ime = true;
+            self.bus.borrow_mut().interrupts.ime = true;
         }
 
         if self.is_halting {
@@ -309,7 +309,7 @@ impl CPU {
     }
 
     fn handle_interrupts(&mut self) {
-        let interrupts = &mut self.bus.borrow_mut().io.interrupts;
+        let interrupts = &mut self.bus.borrow_mut().interrupts;
         if !interrupts.ime {
             return;
         };

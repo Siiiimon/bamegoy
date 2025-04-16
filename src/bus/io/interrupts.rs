@@ -1,7 +1,5 @@
 use crate::bus::error::BusError;
 
-use super::{IOReadable, IOWritable};
-
 pub struct Interrupts {
     pub ime: bool,
     pub registers: [Interrupt; 5],
@@ -43,8 +41,8 @@ impl Default for Interrupts {
     }
 }
 
-impl IOReadable for Interrupts {
-    fn read(&self, addr: u16) -> Result<u8, BusError> {
+impl Interrupts {
+    pub fn read(&self, addr: u16) -> Result<u8, BusError> {
         match addr {
             0xFF0F => {
                 // IF
@@ -69,10 +67,8 @@ impl IOReadable for Interrupts {
             _ => Err(BusError::Unimplemented(addr)),
         }
     }
-}
 
-impl IOWritable for Interrupts {
-    fn write(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
+    pub fn write(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
         match addr {
             0xFF0F => {
                 for i in 0..5 {
@@ -89,9 +85,7 @@ impl IOWritable for Interrupts {
             _ => Err(BusError::Unimplemented(addr)),
         }
     }
-}
 
-impl Interrupts {
     pub fn get(&self, kind: InterruptKind) -> &Interrupt {
         &self.registers[kind as usize]
     }

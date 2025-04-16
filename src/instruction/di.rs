@@ -1,7 +1,7 @@
 use crate::{cpu, disassemble::Disasm};
 
 pub fn di(cpu: &mut cpu::CPU) {
-    cpu.bus.borrow_mut().io.interrupts.ime = false;
+    cpu.bus.borrow_mut().interrupts.ime = false;
     cpu.pc += 1;
 }
 
