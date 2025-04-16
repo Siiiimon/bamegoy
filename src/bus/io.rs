@@ -12,7 +12,7 @@ trait IOWritable {
 }
 
 pub struct IORegisters {
-    serial: serial::Serial,
+    pub serial: serial::Serial,
     pub interrupts: interrupts::Interrupts,
 }
 

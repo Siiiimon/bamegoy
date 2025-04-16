@@ -1,26 +1,8 @@
 use egui::RichText;
 
-use crate::{bus::SharedBus, cpu::CPU, disassemble};
+use crate::{UiState, bus::SharedBus, bus::io::serial, cpu::CPU, disassemble};
 
-pub struct UiState {
-    disasm_should_scroll: bool,
-    disasm_should_follow_pc: bool,
-    disasm_scroll_y: f32,
-    last_pc: u16,
-    current_instruction_index: usize,
-}
-
-impl Default for UiState {
-    fn default() -> Self {
-        Self {
-            disasm_should_scroll: false,
-            disasm_should_follow_pc: true,
-            disasm_scroll_y: 0.0,
-            last_pc: 0,
-            current_instruction_index: 0,
-        }
-    }
-}
+pub mod tabbar;
 
 pub fn draw_control_panel(ctx: &egui::Context, cpu: &mut CPU, bus: SharedBus) {
     egui::TopBottomPanel::top("controls_panel").show(ctx, |ui| {
@@ -108,7 +90,12 @@ pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
     );
 }
 
-pub fn draw_disassembly_panel(ui: &mut egui::Ui, ui_state: &mut UiState, cpu: &CPU, bus: &mut SharedBus) {
+pub fn draw_disassembly_panel(
+    ui: &mut egui::Ui,
+    ui_state: &mut UiState,
+    cpu: &CPU,
+    bus: &mut SharedBus,
+) {
     ui.heading("Disassembly");
 
     ui.horizontal(|ui| {
@@ -167,4 +154,28 @@ pub fn draw_disassembly_panel(ui: &mut egui::Ui, ui_state: &mut UiState, cpu: &C
             }
         });
     });
+}
+
+pub fn draw_serial_panel(ui: &mut egui::Ui, serial: &serial::Serial) {
+    ui.horizontal(|ui| {
+        ui.label(format!(
+            "SC Transfer {}",
+            if serial.control.enable {
+                "enabled"
+            } else {
+                "disabled"
+            }
+        ));
+        ui.spacing();
+        ui.label(format!(
+            "Using {} Clock",
+            if serial.control.should_use_internal_clock {
+                "internal"
+            } else {
+                "external"
+            }
+        ));
+    });
+    ui.label(format!("SB Register: 0x{:02X}", serial.content));
+    ui.separator();
 }

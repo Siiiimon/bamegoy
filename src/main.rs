@@ -1,7 +1,7 @@
 use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
-use ui::draw_memory_panel;
+use ui::{draw_memory_panel, draw_serial_panel};
 use std::{cell::RefCell, env, fs, path::Path, rc::Rc};
 
 pub mod bus;
@@ -12,10 +12,32 @@ pub mod util;
 
 mod ui;
 
+pub struct UiState {
+    disasm_should_scroll: bool,
+    disasm_should_follow_pc: bool,
+    disasm_scroll_y: f32,
+    last_pc: u16,
+    current_instruction_index: usize,
+    bottom_panel_selected_tab: usize,
+}
+
+impl Default for UiState {
+    fn default() -> Self {
+        Self {
+            disasm_should_scroll: false,
+            disasm_should_follow_pc: true,
+            disasm_scroll_y: 0.0,
+            last_pc: 0,
+            current_instruction_index: 0,
+            bottom_panel_selected_tab: 0,
+        }
+    }
+}
+
 struct BamegoyApp {
     bus: bus::SharedBus,
     cpu: cpu::CPU,
-    ui_state: ui::UiState,
+    ui_state: UiState,
 }
 
 impl BamegoyApp {
@@ -43,7 +65,7 @@ impl BamegoyApp {
         Self {
             bus: b.clone(),
             cpu: cpu::CPU::new(b.clone()),
-            ui_state: ui::UiState::default(),
+            ui_state: UiState::default(),
         }
     }
 }
@@ -83,7 +105,16 @@ impl eframe::App for BamegoyApp {
             .default_height(250.0)
             .resizable(true)
             .show(ctx, |ui| {
-                draw_memory_panel(ui, &self.cpu, &mut self.bus);
+                ui::tabbar::tabbar(ui, &vec!["memory".into(), "serial".into()], &mut self.ui_state.bottom_panel_selected_tab);
+                match self.ui_state.bottom_panel_selected_tab {
+                    0 => {
+                        draw_memory_panel(ui, &self.cpu, &mut self.bus);
+                    }
+                    1 => {
+                        draw_serial_panel(ui, &self.bus.borrow().io.serial);
+                    }
+                    _ => unreachable!()
+                }
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {

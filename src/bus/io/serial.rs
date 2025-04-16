@@ -3,15 +3,15 @@ use super::{IOReadable, IOWritable};
 
 #[derive(Default)]
 pub struct Serial {
-    content: u8,
-    control: Control,
+    pub content: u8,
+    pub control: Control,
 }
 
 #[derive(Default)]
-struct Control {
-    enable: bool,
+pub struct Control {
+    pub enable: bool,
     // is_high_speed: bool,
-    should_use_internal_clock: bool, // clock_select
+    pub should_use_internal_clock: bool, // clock_select
 }
 
 impl IOReadable for Serial {
