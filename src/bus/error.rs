@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub enum BusError {
     OutOfBounds(u16),
+    Unimplemented(u16)
 }
 
 impl std::fmt::Display for BusError {
@@ -8,6 +9,9 @@ impl std::fmt::Display for BusError {
         match self {
             BusError::OutOfBounds(addr) => {
                 write!(f, "Address {:04X} is outside of ROM bounds", addr)
+            }
+            BusError::Unimplemented(addr) => {
+                write!(f, "reading from io address {} is not supported yet", addr)
             }
         }
     }

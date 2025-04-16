@@ -24,7 +24,7 @@ impl Bus {
             vram: vec![0; 0x2000].into_boxed_slice(),
             ram: vec![0; 0x4000].into_boxed_slice(),
             oam: vec![0; 0xA0].into_boxed_slice(),
-            io_registers: io::IORegisters{},
+            io_registers: io::IORegisters::new(),
             high_ram: vec![0; 127].into_boxed_slice(),
         }
     }
@@ -44,7 +44,7 @@ impl Bus {
                 Self::mem_read(&self.oam, addr - 0xFE00)
             }
             0xFF00..0xFF80 => {
-                self.io_registers.read(addr - 0xFF00)
+                self.io_registers.read(addr)
             }
             0xFF80..=0xFFFE => {
                 Self::mem_read(&self.high_ram, addr - 0xFF80)
