@@ -20,7 +20,7 @@ pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
 
     if should_jump || opcode == 0o311 | 0o331 {
         if opcode == 0o331 {
-            cpu.interrupt_master = true;
+            cpu.bus.borrow_mut().io.interrupts.ime = true;
         }
         cpu.pc = addr;
     } else {

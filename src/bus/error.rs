@@ -16,3 +16,5 @@ impl std::fmt::Display for BusError {
         }
     }
 }
+
+impl std::error::Error for BusError {}

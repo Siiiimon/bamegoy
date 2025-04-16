@@ -2,18 +2,16 @@ use std::{cell::RefCell, rc::Rc};
 use error::BusError;
 
 mod error;
-mod io;
+pub mod io;
 
 pub type SharedBus = Rc<RefCell<Bus>>;
-
-impl std::error::Error for BusError {}
 
 pub struct Bus {
     pub rom: Box<[u8]>,
     vram: Box<[u8]>,
     ram: Box<[u8]>,
     oam: Box<[u8]>,
-    io_registers: io::IORegisters,
+    pub io: io::IORegisters,
     high_ram: Box<[u8]>,
 }
 
@@ -24,7 +22,7 @@ impl Bus {
             vram: vec![0; 0x2000].into_boxed_slice(),
             ram: vec![0; 0x4000].into_boxed_slice(),
             oam: vec![0; 0xA0].into_boxed_slice(),
-            io_registers: io::IORegisters::new(),
+            io: io::IORegisters::new(),
             high_ram: vec![0; 127].into_boxed_slice(),
         }
     }
@@ -44,7 +42,7 @@ impl Bus {
                 Self::mem_read(&self.oam, addr - 0xFE00)
             }
             0xFF00..0xFF80 => {
-                self.io_registers.read(addr)
+                self.io.read(addr)
             }
             0xFF80..=0xFFFE => {
                 Self::mem_read(&self.high_ram, addr - 0xFF80)
@@ -68,7 +66,7 @@ impl Bus {
                 Self::mem_write(&mut self.oam, addr - 0xFE00, content)
             }
             0xFF00..0xFF80 => {
-                self.io_registers.write(addr - 0xFF00, content)
+                self.io.write(addr - 0xFF00, content)
             }
             0xFF80..0xFFFD => {
                 Self::mem_write(&mut self.high_ram, addr - 0xFF80, content)

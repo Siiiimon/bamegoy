@@ -44,10 +44,7 @@ pub struct CPU {
     pub sp: u16,
     pub pc: u16,
 
-    pub interrupt_master: bool,
     pub ie_enable_delay: bool,
-    pub interrupt_enable: Interrupts,
-    pub interrupt_flags: Interrupts,
 
     pub is_halting: bool,
 
@@ -72,10 +69,7 @@ impl CPU {
             },
             sp: 0,
             pc: 0x0100,
-            interrupt_master: false,
             ie_enable_delay: false,
-            interrupt_enable: Interrupts::default(),
-            interrupt_flags: Interrupts::default(),
             is_halting: false,
             bus,
         }
@@ -84,12 +78,14 @@ impl CPU {
     pub fn step(&mut self) {
         if self.ie_enable_delay {
             self.ie_enable_delay = false;
-            self.interrupt_master = true;
+            self.bus.borrow_mut().io.interrupts.ime = true;
         }
 
         if self.is_halting {
             return;
         }
+
+        self.handle_interrupts();
 
         // fetch
         let opcode = match self.bus.borrow().read_byte(self.pc) {
@@ -218,10 +214,11 @@ impl CPU {
             0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
                 instruction::call::call(self, opcode);
             }
-            0o307 | 0o317 |  0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => {
+            0o307 | 0o317 | 0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => {
                 instruction::rst::rst(self, opcode);
             }
-            0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355 | 0o375 => {
+            0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
+            | 0o375 => {
                 return;
             }
             _ => {
@@ -303,6 +300,30 @@ impl CPU {
             }
             RegisterPair::SP => {
                 self.sp = val;
+            }
+        }
+    }
+
+    fn handle_interrupts(&mut self) {
+        let interrupts = &mut self.bus.borrow_mut().io.interrupts;
+        if !interrupts.ime {
+            return;
+        };
+
+        for (idx, interrupt) in interrupts.registers.iter_mut().enumerate() {
+            if interrupt.is_enabled && interrupt.is_requested {
+                interrupts.ime = false;
+                interrupt.is_requested = false;
+
+                // 2 NOP
+
+                if let Err(e) = self.bus.borrow_mut().push_word(&mut self.sp, self.pc) {
+                    eprintln!("Failed to push PC during interrupt: {}", e);
+                    return;
+                }
+
+                self.pc = idx as u16 + 0x40;
+                break;
             }
         }
     }
