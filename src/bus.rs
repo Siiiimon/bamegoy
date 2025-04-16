@@ -8,63 +8,102 @@ pub type SharedBus = Rc<RefCell<Bus>>;
 impl std::error::Error for BusError {}
 
 pub struct Bus {
-    pub rom: Vec<u8> // bank 0 and bank 1+ as one array
+    pub rom: Box<[u8]>,
+    vram: Box<[u8]>,
+    ram: Box<[u8]>,
+    high_ram: Box<[u8]>,
 }
 
 impl Bus {
     pub fn new() -> Self {
-        Self { rom: vec![0; 0x8000] }
+        Self {
+            rom: vec![0; 0x8000].into_boxed_slice(),
+            vram: vec![0; 0x2000].into_boxed_slice(),
+            ram: vec![0; 0x4000].into_boxed_slice(),
+            high_ram: vec![0; 127].into_boxed_slice(),
+        }
     }
 
-    pub fn rom_read_byte(&self, addr: u16) -> Option<u8> {
-        if addr as usize > self.rom.len() { return None; }
-        Some(self.rom[addr as usize])
+    pub fn read_byte(&self, addr: u16) -> Result<u8, BusError> {
+        match addr {
+            0x0..0x8000 => {
+                Self::mem_read(&self.rom, addr)
+            }
+            0x8000..0xA000 => {
+                Self::mem_read(&self.vram, addr - 0x8000)
+            }
+            0xA000..0xE000 => {
+                Self::mem_read(&self.ram, addr - 0xA000)
+            }
+            0xFF80..=0xFFFE => {
+                Self::mem_read(&self.high_ram, addr - 0xFF80)
+            }
+            _ => Err(BusError::OutOfBounds(addr))
+        }
     }
 
-    pub fn rom_read_word(&self, addr: u16) -> Option<u16> {
-        if (addr as usize) + 1 >= self.rom.len() { return None; }
+    pub fn write_byte(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
+        match addr {
+            0x0..0x8000 => {
+                Self::mem_write(&mut self.rom, addr, content)
+            }
+            0x8000..0xA000 => {
+                Self::mem_write(&mut self.vram, addr - 0x8000, content)
+            }
+            0xA000..0xE000 => {
+                Self::mem_write(&mut self.ram, addr - 0xA000, content)
+            }
+            0xFF80..0xFFFD => {
+                Self::mem_write(&mut self.high_ram, addr - 0xFF80, content)
+            }
+            _ => Err(BusError::OutOfBounds(addr))
+        }
+    }
 
-        let hi = self.rom[(addr + 1) as usize] as u16;
-        let lo = self.rom[addr as usize] as u16;
+    pub fn read_word(&self, addr: u16) -> Result<u16, BusError> {
+        let lo = self.read_byte(addr)?;
+        let hi = self.read_byte(addr + 1)?;
 
-        Some((hi << 8) | lo)
+        Ok(((hi as u16) << 8) | lo as u16)
+    }
+
+    pub fn write_word(&mut self, addr: u16, content: u16) -> Result<(), BusError> {
+        let hi = (content >> 8) as u8;
+        let lo = content as u8;
+
+        self.write_byte(addr, hi)?;
+        self.write_byte(addr + 1, lo)?;
+
+        Ok(())
+    }
+
+    fn mem_read(mem: &[u8], addr: u16) -> Result<u8, BusError> {
+        if addr as usize >= mem.len() { return Err(BusError::OutOfBounds(addr)); }
+        Ok(mem[addr as usize])
+    }
+
+    fn mem_write(mem: &mut [u8], addr: u16, content: u8) -> Result<(), BusError> {
+        if addr as usize >= mem.len() { return Err(BusError::OutOfBounds(addr)); }
+        mem[addr as usize] = content;
+        Ok(())
     }
 
     pub fn push_word(&mut self, sp: &mut u16, content: u16) -> Result<(), BusError> {
         *sp -= 2;
 
         if (*sp as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(*sp)) }
-        self.rom_write_word(*sp, content)?;
+        self.write_word(*sp, content)
 
-        Ok(())
     }
 
     pub fn pop_word(&mut self, sp: &mut u16) -> Result<u16, BusError> {
         if (*sp as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(*sp)) }
 
-        let content = self.rom_read_word(*sp).ok_or(BusError::OutOfBounds(*sp))?;
+        let content = self.read_word(*sp)?;
 
         *sp += 2;
 
         Ok(content)
-    }
-
-    pub fn rom_write_byte(&mut self, addr: u16, byte: u8) -> Result<(), BusError> {
-        if addr as usize >= self.rom.len() { return Err(BusError::OutOfBounds(addr)); }
-        self.rom[addr as usize] = byte;
-        Ok(())
-    }
-
-    pub fn rom_write_word(&mut self, addr: u16, word: u16) -> Result<(), BusError> {
-        if (addr as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(addr)); }
-
-        let hi = (word >> 8) as u8;
-        let lo = word as u8;
-
-        self.rom[addr as usize] = lo;
-        self.rom[(addr as usize) + 1] = hi;
-
-        Ok(())
     }
 
     pub fn from_cartridge_rom(&mut self, cart: Vec<u8>) -> Result<(), String> {

@@ -1,8 +1,8 @@
 use crate::cpu;
 
 pub fn call(cpu: &mut cpu::CPU, opcode: u8) {
-    let lo = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap();
-    let hi = cpu.bus.borrow().rom_read_byte(cpu.pc + 2).unwrap();
+    let lo = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
+    let hi = cpu.bus.borrow().read_byte(cpu.pc + 2).unwrap();
 
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,

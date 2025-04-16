@@ -1,6 +1,6 @@
 use crate::util;
 
-pub fn disassemble(rom: &Vec<u8>, mut pc: u16) -> (String, u16) {
+pub fn disassemble(rom: &[u8], mut pc: u16) -> (String, u16) {
     let opcode = rom.get(pc as usize).copied().unwrap();
     match opcode {
         0o00 => ("NOP".into(), 1),

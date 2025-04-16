@@ -18,7 +18,7 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
 
 pub fn a_n8(cpu: &mut cpu::CPU) {
     let a = cpu.get_register(util::Register::A);
-    let x = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap();
+    let x = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
 
     let value = a.wrapping_add(x);
     cpu.set_register(util::Register::A, value);
@@ -47,7 +47,7 @@ pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
 }
 
 pub fn sp_e8(cpu: &mut cpu::CPU) {
-    let offset = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap() as i16;
+    let offset = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap() as i16;
     let sp = cpu.sp as i16;
     cpu.sp = sp.wrapping_add(offset) as u16;
 

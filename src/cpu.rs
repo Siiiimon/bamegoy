@@ -92,10 +92,10 @@ impl CPU {
         }
 
         // fetch
-        let opcode = match self.bus.borrow().rom_read_byte(self.pc) {
-            Some(byte) => byte,
-            None => {
-                eprintln!("Tried to read invalid ROM address: {:04X}", self.pc);
+        let opcode = match self.bus.borrow().read_byte(self.pc) {
+            Ok(byte) => byte,
+            Err(e) => {
+                eprintln!("{}", e);
                 return;
             }
         };
@@ -242,7 +242,7 @@ impl CPU {
             Register::HL => self
                 .bus
                 .borrow()
-                .rom_read_byte(((self.h as u16) << 8) | (self.l as u16))
+                .read_byte(((self.h as u16) << 8) | (self.l as u16))
                 .unwrap(),
         }
     }
@@ -273,7 +273,7 @@ impl CPU {
             Register::HL => self
                 .bus
                 .borrow_mut()
-                .rom_write_byte(((self.h as u16) << 8) | (self.l as u16), val)
+                .write_byte(((self.h as u16) << 8) | (self.l as u16), val)
                 .unwrap(),
         }
     }

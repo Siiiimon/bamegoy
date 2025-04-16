@@ -23,7 +23,7 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
 
 pub fn a_n8(cpu: &mut cpu::CPU) {
     let a = cpu.get_register(util::Register::A);
-    let x = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap();
+    let x = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
 
     let temp = a.wrapping_add(x);
     let value = if cpu.flags.carry {

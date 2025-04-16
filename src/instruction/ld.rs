@@ -5,10 +5,10 @@ pub fn r8_n8(cpu: &mut cpu::CPU, opcode: u8) {
     let register_code = (opcode >> 3) & 0b111;
     let register = util::get_register_by_code(register_code);
     cpu.pc += 1;
-    let value = match cpu.bus.borrow().rom_read_byte(cpu.pc) {
-        Some(byte) => byte,
-        None => {
-            eprintln!("Tried to read invalid ROM address: {:04X}", cpu.pc);
+    let value = match cpu.bus.borrow().read_byte(cpu.pc) {
+        Ok(byte) => byte,
+        Err(e) => {
+            eprintln!("{}", e);
             return;
         }
     };
@@ -19,10 +19,10 @@ pub fn r8_n8(cpu: &mut cpu::CPU, opcode: u8) {
 pub fn r16_n16(cpu: &mut cpu::CPU, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     cpu.pc += 1;
-    let value = match cpu.bus.borrow().rom_read_word(cpu.pc) {
-        Some(word) => word,
-        None => {
-            eprintln!("Tried to read invalid ROM address: {:04X}", cpu.pc);
+    let value = match cpu.bus.borrow().read_word(cpu.pc) {
+        Ok(word) => word,
+        Err(e) => {
+            eprintln!("{}", e);
             return;
         }
     };
@@ -48,7 +48,7 @@ pub fn addr_of_r16_a(cpu: &mut cpu::CPU, opcode: u8) {
     let addr = cpu.get_register_pair(pair);
     let value = cpu.get_register(util::Register::A);
 
-    match cpu.bus.borrow_mut().rom_write_byte(addr, value) {
+    match cpu.bus.borrow_mut().write_byte(addr, value) {
         Ok(()) => (),
         Err(e) => eprintln!("{}", e)
     }
@@ -60,10 +60,10 @@ pub fn a_addr_of_r16(cpu: &mut cpu::CPU, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let addr = cpu.get_register_pair(pair);
 
-    let value = match cpu.bus.borrow().rom_read_byte(addr) {
-        Some(byte) => byte,
-        None => {
-            eprintln!("Tried to read invalid ROM address: {:04X}", cpu.pc);
+    let value = match cpu.bus.borrow().read_byte(addr) {
+        Ok(byte) => byte,
+        Err(e) => {
+            eprintln!("{}", e);
             return;
         }
     };
@@ -102,17 +102,17 @@ pub fn a_addr_of_hl(cpu: &mut cpu::CPU, should_increase: bool) {
 }
 
 pub fn a16_a(cpu: &mut cpu::CPU) {
-    let addr = cpu.bus.borrow().rom_read_word(cpu.pc + 1).unwrap();
+    let addr = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
     let content = cpu.get_register(util::Register::A);
 
-    let _ = cpu.bus.borrow_mut().rom_write_byte(addr, content);
+    let _ = cpu.bus.borrow_mut().write_byte(addr, content);
 
     cpu.pc += 3;
 }
 
 pub fn a_a16(cpu: &mut cpu::CPU) {
-    let addr = cpu.bus.borrow().rom_read_word(cpu.pc + 1).unwrap();
-    let content = cpu.bus.borrow().rom_read_byte(addr).unwrap();
+    let addr = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
+    let content = cpu.bus.borrow().read_byte(addr).unwrap();
 
     cpu.set_register(util::Register::A, content);
 
@@ -120,16 +120,16 @@ pub fn a_a16(cpu: &mut cpu::CPU) {
 }
 
 pub fn a16_sp(cpu: &mut cpu::CPU) {
-    let addr = cpu.bus.borrow().rom_read_word(cpu.pc + 1).unwrap();
+    let addr = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
     let sp = cpu.get_register_pair(util::RegisterPair::SP);
 
-    let _ = cpu.bus.borrow_mut().rom_write_word(addr, sp);
+    let _ = cpu.bus.borrow_mut().write_word(addr, sp);
     cpu.pc += 3;
 }
 
 pub fn hl_sp_e8(cpu: &mut cpu::CPU) {
     let sp = cpu.sp;
-    let offset = cpu.bus.borrow().rom_read_byte(cpu.pc + 1).unwrap() as i8 as i16;
+    let offset = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap() as i8 as i16;
 
     let result = (sp as i16).wrapping_add(offset) as u16;
     cpu.set_register_pair(util::RegisterPair::HL, result);
