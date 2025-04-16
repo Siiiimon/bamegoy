@@ -1,21 +1,28 @@
+use std::time::Instant;
+
 use egui::RichText;
 
-use crate::{UiState, bus::SharedBus, bus::io::serial, cpu::CPU, disassemble};
+use crate::{bus::{io::serial, SharedBus}, cpu::CPU, disassemble, EmulatorState, RunState, UiState};
 
 pub mod tabbar;
 
-pub fn draw_control_panel(ctx: &egui::Context, cpu: &mut CPU, bus: SharedBus) {
+pub fn draw_control_panel(ctx: &egui::Context, cpu: &mut CPU, bus: SharedBus, emulator_state: &mut EmulatorState) {
     egui::TopBottomPanel::top("controls_panel").show(ctx, |ui| {
         ui.horizontal(|ui| {
             if ui.button("⏵").on_hover_text("Step").clicked() {
                 cpu.step();
             }
 
-            ui.button("▶").on_hover_text("Continue");
-
-            ui.button("⏸").on_hover_text("Pause");
-
-            ui.button("⏹").on_hover_text("Stop");
+            if emulator_state.run_state == RunState::Running {
+                if ui.button("⏸").on_hover_text("Pause").clicked() {
+                    emulator_state.run_state = RunState::Paused;
+                }
+            } else {
+                if ui.button("▶").on_hover_text("Continue").clicked() {
+                    emulator_state.run_state = RunState::Running;
+                    emulator_state.last_step_time = Instant::now();
+                }
+            }
 
             if ui.button("⟳").on_hover_text("Reset").clicked() {
                 cpu.reset(bus);
@@ -157,27 +164,65 @@ pub fn draw_disassembly_panel(
 }
 
 pub fn draw_serial_panel(ui: &mut egui::Ui, serial: &serial::Serial) {
-    ui.horizontal(|ui| {
-        ui.label(format!(
-            "SC Transfer {}",
-            if serial.control.enable {
-                "enabled"
-            } else {
-                "disabled"
-            }
-        ));
-        ui.spacing();
-        ui.label(format!(
-            "Using {} Clock",
-            if serial.control.should_use_internal_clock {
-                "internal"
-            } else {
-                "external"
-            }
-        ));
+    ui.group(|ui| {
+        ui.horizontal(|ui| {
+            ui.label(format!(
+                "SC Transfer: {}",
+                if serial.control.enable {
+                    "Enabled"
+                } else {
+                    "Disabled"
+                }
+            ));
+            ui.separator();
+            ui.label(format!(
+                "Clock: {}",
+                if serial.control.should_use_internal_clock {
+                    "Internal"
+                } else {
+                    "External"
+                }
+            ));
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(format!(
+                "SB Register: 0x{:02X} ('{}')",
+                serial.content,
+                match serial.content {
+                    0x20..=0x7E => serial.content as char,
+                    _ => '.',
+                }
+            ));
+            ui.separator();
+            ui.label(format!("Total sent: {}", serial.outgoing.len()));
+        })
     });
-    ui.label(format!("SB Register: 0x{:02X}", serial.content));
+
     ui.separator();
-    let text = String::from_utf8_lossy(serial.outgoing.as_slice());
-    ui.label(text);
+    ui.label("Sent Bytes:");
+
+    let hex = serial
+        .outgoing
+        .iter()
+        .map(|b| format!("{:02X}", b))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    let ascii = serial
+        .outgoing
+        .iter()
+        .map(|b| {
+            let c = *b as char;
+            if c.is_ascii_graphic() {
+                c
+            } else {
+                '.'
+            }
+        })
+        .collect::<String>();
+
+    ui.monospace(format!("Hex:   {}", hex));
+    ui.monospace(format!("ASCII: {}", ascii));
 }
+

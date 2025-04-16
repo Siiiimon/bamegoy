@@ -2,7 +2,7 @@ use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
 use ui::{draw_memory_panel, draw_serial_panel};
-use std::{cell::RefCell, env, fs, path::Path, rc::Rc};
+use std::{cell::RefCell, env, fs, path::Path, rc::Rc, time::{Duration, Instant}};
 
 pub mod bus;
 pub mod cpu;
@@ -19,6 +19,18 @@ pub struct UiState {
     last_pc: u16,
     current_instruction_index: usize,
     bottom_panel_selected_tab: usize,
+}
+
+pub struct EmulatorState {
+    pub run_state: RunState,
+    pub last_step_time: Instant,
+    pub step_interval: Duration,
+}
+
+#[derive(PartialEq)]
+pub enum RunState {
+    Paused,
+    Running,
 }
 
 impl Default for UiState {
@@ -38,6 +50,7 @@ struct BamegoyApp {
     bus: bus::SharedBus,
     cpu: cpu::CPU,
     ui_state: UiState,
+    emulator_state: EmulatorState,
 }
 
 impl BamegoyApp {
@@ -66,6 +79,7 @@ impl BamegoyApp {
             bus: b.clone(),
             cpu: cpu::CPU::new(b.clone()),
             ui_state: UiState::default(),
+            emulator_state: EmulatorState { run_state: RunState::Paused, last_step_time: Instant::now(), step_interval: Duration::from_millis(500) }
         }
     }
 }
@@ -94,8 +108,17 @@ fn main() -> eframe::Result {
 
 impl eframe::App for BamegoyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if self.emulator_state.run_state == RunState::Running {
+            let now = Instant::now();
+            if now.duration_since(self.emulator_state.last_step_time) >= self.emulator_state.step_interval {
+                self.cpu.step();
+                self.emulator_state.last_step_time = now;
+            }
 
-        ui::draw_control_panel(ctx, &mut self.cpu, self.bus.clone());
+            ctx.request_repaint();
+        }
+
+        ui::draw_control_panel(ctx, &mut self.cpu, self.bus.clone(), &mut self.emulator_state);
 
         egui::SidePanel::left("info_panel").show(ctx, |ui| {
             ui::draw_info_panel(ui, &self.cpu, &mut self.bus);
