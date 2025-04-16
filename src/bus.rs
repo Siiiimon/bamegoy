@@ -12,6 +12,7 @@ pub struct Bus {
     pub rom: Box<[u8]>,
     vram: Box<[u8]>,
     ram: Box<[u8]>,
+    oam: Box<[u8]>,
     io_registers: io::IORegisters,
     high_ram: Box<[u8]>,
 }
@@ -22,6 +23,7 @@ impl Bus {
             rom: vec![0; 0x8000].into_boxed_slice(),
             vram: vec![0; 0x2000].into_boxed_slice(),
             ram: vec![0; 0x4000].into_boxed_slice(),
+            oam: vec![0; 0xA0].into_boxed_slice(),
             io_registers: io::IORegisters{},
             high_ram: vec![0; 127].into_boxed_slice(),
         }
@@ -37,6 +39,9 @@ impl Bus {
             }
             0xA000..0xE000 => {
                 Self::mem_read(&self.ram, addr - 0xA000)
+            }
+            0xFE00..0xFEA0 => {
+                Self::mem_read(&self.oam, addr - 0xFE00)
             }
             0xFF00..0xFF80 => {
                 self.io_registers.read(addr - 0xFF00)
@@ -58,6 +63,9 @@ impl Bus {
             }
             0xA000..0xE000 => {
                 Self::mem_write(&mut self.ram, addr - 0xA000, content)
+            }
+            0xFE00..0xFEA0 => {
+                Self::mem_write(&mut self.oam, addr - 0xFE00, content)
             }
             0xFF00..0xFF80 => {
                 self.io_registers.write(addr - 0xFF00, content)
