@@ -1,7 +1,7 @@
 use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
-use ui::{draw_memory_panel, draw_serial_panel};
+use ui::{breakpoints::BreakpointView, draw_memory_panel, draw_serial_panel};
 use std::{cell::RefCell, env, fs, path::Path, rc::Rc, time::{Duration, Instant}};
 
 pub mod bus;
@@ -19,6 +19,7 @@ pub struct UiState {
     last_pc: u16,
     current_instruction_index: usize,
     bottom_panel_selected_tab: usize,
+    breakpoint_view: BreakpointView,
 }
 
 pub struct EmulatorState {
@@ -42,6 +43,7 @@ impl Default for UiState {
             last_pc: 0,
             current_instruction_index: 0,
             bottom_panel_selected_tab: 0,
+            breakpoint_view: BreakpointView::default(),
         }
     }
 }
@@ -79,7 +81,11 @@ impl BamegoyApp {
             bus: b.clone(),
             cpu: cpu::CPU::new(b.clone(), should_trace_log),
             ui_state: UiState::default(),
-            emulator_state: EmulatorState { run_state: RunState::Paused, last_step_time: Instant::now(), step_interval: Duration::from_millis(500) },
+            emulator_state: EmulatorState {
+                run_state: RunState::Paused,
+                last_step_time: Instant::now(),
+                step_interval: Duration::from_millis(100),
+            },
         }
     }
 }
@@ -118,6 +124,14 @@ impl eframe::App for BamegoyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
 
         if self.emulator_state.run_state == RunState::Running {
+
+            for bp in &self.ui_state.breakpoint_view.breakpoints {
+                if bp.addr == self.cpu.pc {
+                    self.emulator_state.run_state = RunState::Paused;
+                    return;
+                }
+            }
+
             let now = Instant::now();
             if now.duration_since(self.emulator_state.last_step_time) >= self.emulator_state.step_interval {
                 self.cpu.step();
@@ -127,7 +141,7 @@ impl eframe::App for BamegoyApp {
             ctx.request_repaint();
         }
 
-        ui::draw_control_panel(ctx, &mut self.cpu, self.bus.clone(), &mut self.emulator_state);
+        ui::draw_control_panel(ctx, &mut self.cpu, self.bus.clone(), &mut self.ui_state, &mut self.emulator_state);
 
         egui::SidePanel::left("info_panel").show(ctx, |ui| {
             ui::draw_info_panel(ui, &self.cpu, &mut self.bus);
@@ -152,5 +166,7 @@ impl eframe::App for BamegoyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui::draw_disassembly_panel(ui, &mut self.ui_state, &self.cpu, &mut self.bus);
         });
+
+        ui::breakpoints::draw_breakpoint_list_window(ctx, &mut self.ui_state.breakpoint_view);
     }
 }

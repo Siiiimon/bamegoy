@@ -2,12 +2,29 @@ use std::time::Instant;
 
 use egui::RichText;
 
-use crate::{bus::{io::serial, SharedBus}, cpu::CPU, disassemble, EmulatorState, RunState, UiState};
+use crate::{
+    EmulatorState, RunState, UiState,
+    bus::{SharedBus, io::serial},
+    cpu::CPU,
+    disassemble,
+};
 
 pub mod tabbar;
+pub mod breakpoints;
 
-pub fn draw_control_panel(ctx: &egui::Context, cpu: &mut CPU, bus: SharedBus, emulator_state: &mut EmulatorState) {
+pub fn draw_control_panel(
+    ctx: &egui::Context,
+    cpu: &mut CPU,
+    bus: SharedBus,
+    ui_state: &mut UiState,
+    emulator_state: &mut EmulatorState,
+) {
     egui::TopBottomPanel::top("controls_panel").show(ctx, |ui| {
+        ui.horizontal(|ui| {
+            if ui.button("B").on_hover_text("Breakpoints").clicked() {
+                ui_state.breakpoint_view.show_breakpoint_view = !ui_state.breakpoint_view.show_breakpoint_view;
+            }
+        });
         ui.horizontal(|ui| {
             if ui.button("⏵").on_hover_text("Step").clicked() {
                 cpu.step();
@@ -59,8 +76,18 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
     ui.separator();
     ui.label("current instruction:");
     if let Some(disasm) = disassemble(&bus.borrow(), cpu.pc) {
-        ui.monospace(disasm.mnemonic);
-    }}
+        ui.monospace(format!("mnemonic: {}", disasm.mnemonic));
+        ui.monospace(format!(
+            "bytes: {}",
+            disasm
+                .bytes
+                .iter()
+                .map(|b| format!("{:02X}", b))
+                .collect::<Vec<_>>()
+                .join(" ")
+        ));
+    }
+}
 
 pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
     ui.heading("Memory");
@@ -212,11 +239,7 @@ pub fn draw_serial_panel(ui: &mut egui::Ui, serial: &serial::Serial) {
         .iter()
         .map(|b| {
             let c = *b as char;
-            if c.is_ascii_graphic() {
-                c
-            } else {
-                '.'
-            }
+            if c.is_ascii_graphic() { c } else { '.' }
         })
         .collect::<String>();
 
