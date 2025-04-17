@@ -2,8 +2,7 @@ use crate::bus;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
-    let lo = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
-    let hi = cpu.bus.borrow().read_byte(cpu.pc + 2).unwrap();
+    let target = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
 
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,
@@ -14,7 +13,7 @@ pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
     };
 
     if should_jump || opcode == 0o303 {
-        cpu.pc = ((hi as u16) << 8) | lo as u16;
+        cpu.pc = target;
     } else {
         cpu.pc += 3;
     }

@@ -148,24 +148,25 @@ pub fn hl_sp_e8(cpu: &mut cpu::CPU) {
 
 pub fn r8_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let reg = util::get_register_by_code((opcode >> 3) & 0b111);
+    let content = bus.read_byte(addr + 1).unwrap();
+
     Some(Disasm {
         address: addr,
         bytes: vec![opcode, bus.read_byte(addr + 1).unwrap_or(0)],
         length: 2,
-        mnemonic: format!("LD {}, n8", reg),
+        mnemonic: format!("LD {}, ${:02X}", reg, content),
     })
 }
 
 pub fn r16_n16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
-    let lo = bus.read_byte(addr + 1).unwrap_or(0);
-    let hi = bus.read_byte(addr + 2).unwrap_or(0);
+    let content = bus.read_word(addr + 1).unwrap();
 
     Some(Disasm {
         address: addr,
-        bytes: vec![opcode, lo, hi],
+        bytes: vec![opcode, content as u8, (content >> 8) as u8],
         length: 3,
-        mnemonic: format!("LD {}, n16", pair),
+        mnemonic: format!("LD {}, ${:04X}", pair, content),
     })
 }
 
