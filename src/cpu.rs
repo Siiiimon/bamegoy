@@ -51,7 +51,7 @@ pub struct CPU {
 
     pub bus: bus::SharedBus,
 
-    should_trace_log: bool,
+    pub should_trace_log: bool,
 }
 
 impl CPU {

@@ -12,3 +12,5 @@
 - [ ] execution heatmap (crazy work wth)
 - [ ] call stack view
 - [ ] mem watch
+- [ ] save serial log to file
+- [ ] save trace log to file

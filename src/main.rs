@@ -1,7 +1,7 @@
 use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
-use ui::{breakpoints::BreakpointView, draw_memory_panel, draw_serial_panel};
+use ui::{breakpoints::BreakpointView, draw_memory_panel, draw_serial_panel, settings::SettingsView};
 use std::{cell::RefCell, env, fs, path::Path, rc::Rc, time::{Duration, Instant}};
 
 pub mod bus;
@@ -19,6 +19,7 @@ pub struct UiState {
     last_pc: u16,
     current_instruction_index: usize,
     bottom_panel_selected_tab: usize,
+    settings_view: SettingsView,
     breakpoint_view: BreakpointView,
 }
 
@@ -43,6 +44,7 @@ impl Default for UiState {
             last_pc: 0,
             current_instruction_index: 0,
             bottom_panel_selected_tab: 0,
+            settings_view: SettingsView::default(),
             breakpoint_view: BreakpointView::default(),
         }
     }
@@ -166,6 +168,8 @@ impl eframe::App for BamegoyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui::draw_disassembly_panel(ui, &mut self.ui_state, &self.cpu, &mut self.bus);
         });
+
+        ui::settings::draw_settings_window(ctx, &mut self.ui_state.settings_view, &mut self.emulator_state, &mut self.cpu.should_trace_log);
 
         ui::breakpoints::draw_breakpoint_list_window(ctx, &mut self.ui_state.breakpoint_view);
     }

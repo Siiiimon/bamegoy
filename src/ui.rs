@@ -9,6 +9,7 @@ use crate::{
     disassemble,
 };
 
+pub mod settings;
 pub mod tabbar;
 pub mod breakpoints;
 
@@ -21,10 +22,11 @@ pub fn draw_control_panel(
 ) {
     egui::TopBottomPanel::top("controls_panel").show(ctx, |ui| {
         ui.horizontal(|ui| {
-            if ui.button("B").on_hover_text("Breakpoints").clicked() {
-                ui_state.breakpoint_view.show_breakpoint_view = !ui_state.breakpoint_view.show_breakpoint_view;
+            if ui.button("Settings").clicked() {
+                ui_state.settings_view.show_settings_view = true;
             }
         });
+        ui.separator();
         ui.horizontal(|ui| {
             if ui.button("⏵").on_hover_text("Step").clicked() {
                 cpu.step();
@@ -43,6 +45,10 @@ pub fn draw_control_panel(
 
             if ui.button("⟳").on_hover_text("Reset").clicked() {
                 cpu.reset(bus);
+            }
+
+            if ui.button("B").on_hover_text("Breakpoints").clicked() {
+                ui_state.breakpoint_view.show_breakpoint_view = !ui_state.breakpoint_view.show_breakpoint_view;
             }
 
             // ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
