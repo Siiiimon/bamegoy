@@ -49,7 +49,7 @@ pub fn hl(cpu: &mut cpu::CPU) {
 }
 
 pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let target = bus.read_word(addr).unwrap();
+    let target = bus.read_word(addr + 1).unwrap();
 
     let mnemonic = match opcode {
         0xC3 => format!("JP ${:04X}", target),
