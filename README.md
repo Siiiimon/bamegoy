@@ -1,0 +1,14 @@
+### Ideas
+- [ ] toggle octal/hex view in memory view / serial view
+- [ ] split pane for ascii in memory view / serial view
+- [ ] editable bytes in RAM (memory view)
+- [ ] toggle breakpoint in bp list view
+- [ ] comment column in disasm view
+- [ ] disasm context menu
+    - [ ] add breakpoint
+    - [ ] go to address
+    - [ ] follow jump/call/ret/etc.
+    - [ ] move 'follow current instruction' checkbox here
+- [ ] execution heatmap (crazy work wth)
+- [ ] call stack view
+- [ ] mem watch
