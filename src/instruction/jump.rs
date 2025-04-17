@@ -21,6 +21,11 @@ pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
 
 pub fn e8(cpu: &mut cpu::CPU, opcode: u8) {
     let offset = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap() as i8;
+    let target = if offset < 0 {
+        cpu.pc.wrapping_add(2).wrapping_sub((-offset) as u16)
+    } else {
+        cpu.pc.wrapping_add(2).wrapping_add(offset as u16)
+    };
 
     let should_jump = match opcode >> 4 {
         1 => true,
@@ -32,7 +37,7 @@ pub fn e8(cpu: &mut cpu::CPU, opcode: u8) {
     };
 
     if should_jump {
-        cpu.pc = offset as u16 + 2;
+        cpu.pc = target;
     } else {
         cpu.pc += 2;
     }
@@ -64,8 +69,12 @@ pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
 }
 
 pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let offset = bus.read_byte(addr + 1).unwrap();
-    let target = addr.wrapping_add(2).wrapping_add(offset as u16);
+    let offset = bus.read_byte(addr + 1).unwrap() as i8;
+    let target = if offset < 0 {
+        addr.wrapping_add(2).wrapping_sub((-offset) as u16)
+    } else {
+        addr.wrapping_add(2).wrapping_add(offset as u16)
+    };
 
     let mnemonic = match opcode {
         0x18 => format!("JR ${:04X}", target),
