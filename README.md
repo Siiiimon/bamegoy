@@ -2,6 +2,9 @@
 - [ ] toggle octal/hex view in memory view / serial view
 - [ ] split pane for ascii in memory view / serial view
 - [ ] editable bytes in RAM (memory view)
+- [ ] draw box around stack in mem view
+- [ ] highlight current SP in mem view
+- [ ] separate bg color for each memory map region
 - [ ] toggle breakpoint in bp list view
 - [ ] comment column in disasm view
 - [ ] disasm context menu
@@ -10,6 +13,7 @@
     - [ ] go to address
     - [ ] follow jump/call/ret/etc.
     - [ ] move 'follow current instruction' checkbox here
+    - [ ] NOP out instruction
 - [ ] execution heatmap (crazy work wth)
 - [ ] call stack view
 - [ ] mem watch
