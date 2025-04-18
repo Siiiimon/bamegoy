@@ -65,7 +65,7 @@ pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode, target as u8, (target >> 8) as u8],
         length: 3,
-        mnemonic: instr.join(" ").to_string() + " " + &target.to_string(),
+        mnemonic: instr.join(" ").to_string() + " " + &format!("{:04X}", target),
         verb: instr[0].clone(),
         operands: if instr[1].is_empty() {
             vec![Operand::Address(target)]
@@ -96,7 +96,7 @@ pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode, offset as u8],
         length: 2,
-        mnemonic: instr.join(" ").to_string() + " " + &target.to_string(),
+        mnemonic: instr.join(" ").to_string() + " " + &format!("{:04X}", target),
         verb: instr[0].clone(),
         operands: if instr[1].is_empty() {
             vec![Operand::Offset(offset)]
