@@ -1,4 +1,4 @@
-use crate::disassemble;
+use crate::{disassemble, util::color32_from_catppuccin_with_alpha};
 use crate::disassemble::Operand;
 use egui::{Color32, FontId, TextFormat, text::LayoutJob};
 
@@ -91,7 +91,11 @@ pub fn draw_disassembly_panel(
                 let bg_color = if is_active {
                     color32_from_catppuccin(COLORS.base)
                 } else {
-                    color32_from_catppuccin(COLORS.mantle)
+                    if ui_state.breakpoint_view.breakpoints.iter().any(|b| b.addr == pc as u16) {
+                        color32_from_catppuccin_with_alpha(COLORS.red, 70)
+                    } else {
+                        color32_from_catppuccin(COLORS.mantle)
+                    }
                 };
                 painter.rect_filled(rect, 0.0, bg_color);
 
