@@ -1,8 +1,10 @@
-use crate::{disassemble, util::color32_from_catppuccin_with_alpha};
 use crate::disassemble::Operand;
+use crate::{disassemble, util::color32_from_catppuccin_with_alpha};
 use egui::{Color32, FontId, TextFormat, text::LayoutJob};
 
 use crate::{COLORS, UiState, bus::SharedBus, cpu::CPU, util::color32_from_catppuccin};
+
+use super::breakpoints::Breakpoint;
 
 pub struct DisassemblyView {
     pub disasm_should_follow_pc: bool,
@@ -87,11 +89,40 @@ pub fn draw_disassembly_panel(
                     egui::Sense::hover(),
                 );
 
+                let response = ui.interact(rect, ui.make_persistent_id(pc), egui::Sense::click());
+
+                response.context_menu(|ui| {
+                    if let Some(pos) = ui_state
+                        .breakpoint_view
+                        .breakpoints
+                        .iter()
+                        .position(|b| b.addr == pc as u16)
+                    {
+                        if ui.button("Clear breakpoint").clicked() {
+                            ui_state.breakpoint_view.breakpoints.remove(pos);
+                            ui.close_menu();
+                        }
+                    } else {
+                        if ui.button("Set breakpoint").clicked() {
+                            ui_state.breakpoint_view.breakpoints.push(Breakpoint {
+                                addr: pc as u16,
+                                is_active: true,
+                            });
+                            ui.close_menu();
+                        }
+                    }
+                });
+
                 let painter = ui.painter();
                 let bg_color = if is_active {
                     color32_from_catppuccin(COLORS.base)
                 } else {
-                    if ui_state.breakpoint_view.breakpoints.iter().any(|b| b.addr == pc as u16) {
+                    if ui_state
+                        .breakpoint_view
+                        .breakpoints
+                        .iter()
+                        .any(|b| b.addr == pc as u16)
+                    {
                         color32_from_catppuccin_with_alpha(COLORS.red, 70)
                     } else {
                         color32_from_catppuccin(COLORS.mantle)
@@ -133,12 +164,15 @@ fn format_mnemonic(addr: u16, disasm: disassemble::Disasm, is_current: bool) -> 
         },
     );
 
-
     for operand in disasm.operands {
         let operand_color = match operand {
             Operand::Register8(_) | Operand::Register16(_) => color32_from_catppuccin(COLORS.green),
-            Operand::Immediate8(_) | Operand::Immediate16(_) => color32_from_catppuccin(COLORS.blue),
-            Operand::Address(_) | Operand::Offset(_) | Operand::MemoryIndirect(_) => color32_from_catppuccin(COLORS.peach),
+            Operand::Immediate8(_) | Operand::Immediate16(_) => {
+                color32_from_catppuccin(COLORS.blue)
+            }
+            Operand::Address(_) | Operand::Offset(_) | Operand::MemoryIndirect(_) => {
+                color32_from_catppuccin(COLORS.peach)
+            }
             Operand::Conditional(_) => color32_from_catppuccin(COLORS.rosewater),
             Operand::Raw(_) => color32_from_catppuccin(COLORS.subtext0),
         };

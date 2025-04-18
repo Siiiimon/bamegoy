@@ -5,7 +5,8 @@
 - [ ] toggle breakpoint in bp list view
 - [ ] comment column in disasm view
 - [ ] disasm context menu
-    - [ ] add breakpoint
+    - [x] add breakpoint
+    - [ ] show references to this address
     - [ ] go to address
     - [ ] follow jump/call/ret/etc.
     - [ ] move 'follow current instruction' checkbox here
