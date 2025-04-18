@@ -59,6 +59,8 @@ pub fn rlca_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "RLCA".into(),
+        verb: "RLCA".into(),
+        operands: vec![],
     })
 }
 
@@ -68,6 +70,8 @@ pub fn rla_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "RLA".into(),
+        verb: "RLA".into(),
+        operands: vec![],
     })
 }
 
@@ -77,6 +81,8 @@ pub fn rra_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "RRA".into(),
+        verb: "RRA".into(),
+        operands: vec![],
     })
 }
 
@@ -86,5 +92,7 @@ pub fn rrca_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "RRCA".into(),
+        verb: "RRCA".into(),
+        operands: vec![],
     })
 }

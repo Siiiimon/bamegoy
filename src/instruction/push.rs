@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
@@ -24,5 +25,7 @@ pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("PUSH {}", pair),
+        verb: "PUSH".into(),
+        operands: vec![Operand::Register16(pair.to_string())],
     })
 }

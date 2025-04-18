@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm};
 
 pub fn rst(cpu: &mut cpu::CPU, opcode: u8) {
@@ -16,5 +17,7 @@ pub fn rst_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("RST ${:02X}", target),
+        verb: "RST".into(),
+        operands: vec![Operand::Address(target as u16)],
     })
 }

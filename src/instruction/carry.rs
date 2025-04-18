@@ -23,6 +23,8 @@ pub fn scf_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "SCF".into(),
+        verb: "SCF".into(),
+        operands: vec![],
     })
 }
 
@@ -32,6 +34,8 @@ pub fn ccf_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "CCF".into(),
+        verb: "CCF".into(),
+        operands: vec![],
     })
 }
 

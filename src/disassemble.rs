@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{bus, instruction, util::get_register_pair_by_code};
 
 pub struct Disasm {
@@ -5,15 +7,45 @@ pub struct Disasm {
     pub bytes: Vec<u8>,
     pub length: u8,
     pub mnemonic: String,
+    pub verb: String,
+    pub operands: Vec<Operand>,
     // pub doc: Option<String>,
     // pub category: Option<String>,
+}
+
+pub enum Operand {
+    Register8(String),
+    Register16(String),
+    Immediate8(u8),
+    Immediate16(u16),
+    Address(u16),
+    Offset(i8),
+    Conditional(String),
+    MemoryIndirect(String),
+    Raw(u8),
+}
+
+impl fmt::Display for Operand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Operand::Register8(reg) => write!(f, "{}", reg),
+            Operand::Register16(reg) => write!(f, "{}", reg),
+            Operand::Immediate8(v) => write!(f, "${:02X}", v),
+            Operand::Immediate16(v) => write!(f, "${:04X}", v),
+            Operand::Address(v) => write!(f, "(${:04X})", v),
+            Operand::Offset(o) => write!(f, "${:+}", o),
+            Operand::Conditional(cond) => write!(f, "{}", cond),
+            Operand::MemoryIndirect(inner) => write!(f, "({})", inner),
+            Operand::Raw(byte) => write!(f, "${:02X}", byte),
+        }
+    }
 }
 
 pub fn disassemble(bus: &bus::Bus, addr: u16) -> Option<Disasm> {
     let opcode = bus.read_byte(addr).unwrap_or_else(|e| panic!("Tried to disassemble invalid address {:04X} - {}", addr, e));
     match opcode {
         0x00 => {
-            Some(Disasm {address: addr, bytes: vec![opcode], length: 1, mnemonic: "NOP".into()})
+            Some(Disasm {address: addr, bytes: vec![opcode], length: 1, mnemonic: "NOP".into(), verb: "NOP".into(), operands: vec![]})
         }
         0o363 => {
             instruction::di::di_disasm(bus, addr, opcode)
@@ -197,6 +229,8 @@ pub fn disassemble(bus: &bus::Bus, addr: u16) -> Option<Disasm> {
                 bytes: vec![opcode],
                 length: 1,
                 mnemonic: format!(".db ${:02X}", opcode),
+                verb: ".db".into(),
+                operands: vec![Operand::Raw(opcode)],
             })
         }
     }

@@ -1,5 +1,6 @@
 use crate::bus;
 use crate::disassemble::Disasm;
+use crate::disassemble::Operand;
 use crate::util;
 use crate::cpu;
 
@@ -35,6 +36,8 @@ pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8, pair: util::RegisterPa
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("INC {}", pair),
+        verb: "INC".into(),
+        operands: vec![Operand::Register16(pair.to_string())],
     })
 }
 
@@ -47,5 +50,7 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("INC {}", register),
+        verb: "INC".into(),
+        operands: vec![Operand::Register8(register.to_string())],
     })
 }

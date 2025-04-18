@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
@@ -51,12 +52,12 @@ pub fn hl(cpu: &mut cpu::CPU) {
 pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let target = bus.read_word(addr + 1).unwrap();
 
-    let mnemonic = match opcode {
-        0xC3 => format!("JP ${:04X}", target),
-        0xC2 => format!("JP NZ, ${:04X}", target),
-        0xCA => format!("JP Z, ${:04X}", target),
-        0xD2 => format!("JP NC, ${:04X}", target),
-        0xDA => format!("JP C, ${:04X}", target),
+    let instr = match opcode {
+        0xC3 => vec!["JP".to_string(), "".to_string()],
+        0xC2 => vec!["JP".to_string(), "NZ".to_string()],
+        0xCA => vec!["JP".to_string(), "Z".to_string()],
+        0xD2 => vec!["JP".to_string(), "NC".to_string()],
+        0xDA => vec!["JP".to_string(), "C".to_string()],
         _ => return None,
     };
 
@@ -64,7 +65,13 @@ pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode, target as u8, (target >> 8) as u8],
         length: 3,
-        mnemonic,
+        mnemonic: instr.join(" ").to_string() + " " + &target.to_string(),
+        verb: instr[0].clone(),
+        operands: if instr[1].is_empty() {
+            vec![Operand::Address(target)]
+        } else {
+            vec![Operand::Conditional(instr[1].clone()), Operand::Address(target)]
+        }
     })
 }
 
@@ -76,12 +83,12 @@ pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         addr.wrapping_add(2).wrapping_add(offset as u16)
     };
 
-    let mnemonic = match opcode {
-        0x18 => format!("JR ${:04X}", target),
-        0x20 => format!("JR NZ, ${:04X}", target),
-        0x28 => format!("JR Z, ${:04X}", target),
-        0x30 => format!("JR NC, ${:04X}", target),
-        0x38 => format!("JR C, ${:04X}", target),
+    let instr = match opcode {
+        0x18 => vec!["JP".to_string(), "".to_string()],
+        0x20 => vec!["JP".to_string(), "NZ".to_string()],
+        0x28 => vec!["JP".to_string(), "Z".to_string()],
+        0x30 => vec!["JP".to_string(), "NC".to_string()],
+        0x38 => vec!["JP".to_string(), "C".to_string()],
         _ => return None,
     };
 
@@ -89,7 +96,13 @@ pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode, offset as u8],
         length: 2,
-        mnemonic,
+        mnemonic: instr.join(" ").to_string() + " " + &target.to_string(),
+        verb: instr[0].clone(),
+        operands: if instr[1].is_empty() {
+            vec![Operand::Offset(offset)]
+        } else {
+            vec![Operand::Conditional(instr[1].clone()), Operand::Offset(offset)]
+        }
     })
 }
 
@@ -99,5 +112,7 @@ pub fn hl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "JP HL".into(),
+        verb: "JP".into(),
+        operands: vec![Operand::Register16("HL".to_string())],
     })
 }

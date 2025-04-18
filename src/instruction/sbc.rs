@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
@@ -45,6 +46,8 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("SBC A, {}", register),
+        verb: "SBC".into(),
+        operands: vec![Operand::Register8("A".into()), Operand::Register8(register.to_string())]
     })
 }
 
@@ -56,5 +59,7 @@ pub fn a_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode, imm],
         length: 2,
         mnemonic: format!("SBC A, ${:02X}", imm),
+        verb: "SBC".into(),
+        operands: vec![Operand::Register8("A".into()), Operand::Immediate8(imm)],
     })
 }

@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
@@ -70,7 +71,9 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode],
         length: 1,
-        mnemonic: format!("ADD {}", register)
+        mnemonic: format!("ADD {}", register),
+        verb: "ADD".to_string(),
+        operands: vec![Operand::Register8(register.to_string())],
     })
 }
 
@@ -82,17 +85,21 @@ pub fn a_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode, imm],
         length: 2,
         mnemonic: format!("ADD A, ${:02X}", imm),
+        verb: "ADD".to_string(),
+        operands: vec![Operand::Register8("A".into()), Operand::Immediate8(imm)],
     })
 }
 
 pub fn sp_e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let offset = bus.read_byte(addr + 1).unwrap();
+    let offset = bus.read_byte(addr + 1).unwrap() as i8;
 
     Some(Disasm {
         address: addr,
         bytes: vec![opcode, offset as u8],
         length: 2,
         mnemonic: format!("ADD SP, {:+}", offset),
+        verb: "ADD".to_string(),
+        operands: vec![Operand::Register8("A".into()), Operand::Offset(offset)],
     })
 }
 
@@ -103,6 +110,8 @@ pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode],
         length: 1,
-        mnemonic: format!("ADD {}", pair)
+        mnemonic: format!("ADD {}", pair),
+        verb: "ADD".to_string(),
+        operands: vec![Operand::Register16(pair.to_string())]
     })
 }

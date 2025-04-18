@@ -12,6 +12,8 @@ pub mod util;
 
 mod ui;
 
+const COLORS: catppuccin::FlavorColors = catppuccin::PALETTE.macchiato.colors;
+
 pub struct UiState {
     last_pc: u16,
     bottom_panel_selected_tab: usize,

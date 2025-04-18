@@ -12,5 +12,7 @@ pub fn ei_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         bytes: vec![opcode],
         length: 1,
         mnemonic: "EI".into(),
+        verb: "EI".into(),
+        operands: vec![],
     })
 }

@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm, util};
 
 pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
@@ -32,7 +33,9 @@ pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8, pair: util::RegisterPa
         address: addr,
         bytes: vec![opcode],
         length: 1,
-        mnemonic: format!("DEC {}", pair)
+        mnemonic: format!("DEC {}", pair),
+        verb: "DEC".into(),
+        operands: vec![Operand::Register16(pair.to_string())],
     })
 }
 
@@ -45,5 +48,7 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<crate::disass
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("DEC {}", register),
+        verb: "DEC".into(),
+        operands: vec![Operand::Register8(register.to_string())],
     })
 }

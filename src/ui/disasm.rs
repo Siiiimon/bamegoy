@@ -1,6 +1,8 @@
-use egui::RichText;
+use crate::disassemble;
+use crate::disassemble::Operand;
+use egui::{Color32, FontId, TextFormat, text::LayoutJob};
 
-use crate::{bus::SharedBus, cpu::CPU, disassemble, UiState};
+use crate::{COLORS, UiState, bus::SharedBus, cpu::CPU, util::color32_from_catppuccin};
 
 pub struct DisassemblyView {
     pub disasm_should_follow_pc: bool,
@@ -41,7 +43,8 @@ pub fn draw_disassembly_panel(
 
     while pc < bus.borrow().rom.len() {
         pc_lookup.push(pc);
-        let disasm = disassemble(&bus.borrow(), pc as u16).unwrap();
+        let disasm = disassemble(&bus.borrow(), pc as u16)
+            .expect(&format!("No opcode byte at address {:04X}", pc));
         if pc == cpu.pc as usize {
             ui_state.disassembly_view.current_instruction_index = instruction_counter;
         }
@@ -68,18 +71,83 @@ pub fn draw_disassembly_panel(
 
     ui.with_layout(egui::Layout::top_down_justified(egui::Align::Min), |ui| {
         scroll_area.show_rows(ui, row_height, pc_lookup.len(), |ui, range| {
+            let painter = ui.painter();
+            painter.rect_filled(ui.max_rect(), 0.0, color32_from_catppuccin(COLORS.mantle));
+
             for row in range {
                 let pc = pc_lookup[row];
-                let disasm = disassemble(&bus.borrow(), pc as u16).unwrap();
+                let disasm = disassemble(&bus.borrow(), pc as u16)
+                    .expect(&format!("No opcode byte at address {:04X}", pc));
+                let is_active = pc == cpu.pc as usize;
 
-                let text = RichText::new(format!("{:04X}: {}", pc, disasm.mnemonic)).monospace();
+                let layout_job = format_mnemonic(pc as u16, disasm, is_active);
 
-                if pc == cpu.pc as usize {
-                    ui.label(text.background_color(egui::Color32::from_gray(40)));
+                let (rect, _) = ui.allocate_exact_size(
+                    egui::vec2(ui.available_width(), row_height),
+                    egui::Sense::hover(),
+                );
+
+                let painter = ui.painter();
+                let bg_color = if is_active {
+                    color32_from_catppuccin(COLORS.base)
                 } else {
-                    ui.label(text);
-                }
+                    color32_from_catppuccin(COLORS.mantle)
+                };
+                painter.rect_filled(rect, 0.0, bg_color);
+
+                let galley = ui.fonts(|f| f.layout_job(layout_job));
+                painter.galley(rect.left_top(), galley, Color32::DEBUG_COLOR);
             }
         });
     });
+}
+
+fn format_mnemonic(addr: u16, disasm: disassemble::Disasm, is_current: bool) -> LayoutJob {
+    let mut job = LayoutJob::default();
+
+    job.append(
+        &format!("{:04X}", addr),
+        0.0,
+        TextFormat {
+            font_id: FontId::monospace(12.0),
+            color: if is_current {
+                color32_from_catppuccin(COLORS.lavender)
+            } else {
+                color32_from_catppuccin(COLORS.overlay1)
+            },
+            ..Default::default()
+        },
+    );
+
+    job.append(
+        &disasm.verb,
+        18.0,
+        TextFormat {
+            font_id: FontId::monospace(12.0),
+            color: color32_from_catppuccin(COLORS.mauve),
+            ..Default::default()
+        },
+    );
+
+
+    for operand in disasm.operands {
+        let operand_color = match operand {
+            Operand::Register8(_) | Operand::Register16(_) => color32_from_catppuccin(COLORS.green),
+            Operand::Immediate8(_) | Operand::Immediate16(_) => color32_from_catppuccin(COLORS.blue),
+            Operand::Address(_) | Operand::Offset(_) | Operand::MemoryIndirect(_) => color32_from_catppuccin(COLORS.peach),
+            Operand::Conditional(_) => color32_from_catppuccin(COLORS.rosewater),
+            Operand::Raw(_) => color32_from_catppuccin(COLORS.subtext0),
+        };
+        job.append(
+            &format!("{operand}"),
+            10.0,
+            TextFormat {
+                font_id: FontId::monospace(12.0),
+                color: operand_color,
+                ..Default::default()
+            },
+        );
+    }
+
+    job
 }

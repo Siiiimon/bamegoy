@@ -1,4 +1,5 @@
 use crate::bus;
+use crate::disassemble::Operand;
 use crate::{cpu, disassemble::Disasm};
 
 pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
@@ -30,13 +31,13 @@ pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
 }
 
 pub fn ret_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let mnemonic = match opcode {
-        0xC9 => "RET".to_string(),
-        0xC0 => "RET NZ".to_string(),
-        0xC8 => "RET Z".to_string(),
-        0xD0 => "RET NC".to_string(),
-        0xD8 => "RET C".to_string(),
-        0xD9 => "RETI".to_string(),
+    let instr = match opcode {
+        0xC9 => vec!["RET".to_string(), "".to_string()],
+        0xC0 => vec!["RET".to_string(), "NZ".to_string()],
+        0xC8 => vec!["RET".to_string(), "Z".to_string()],
+        0xD0 => vec!["RET".to_string(), "NC".to_string()],
+        0xD8 => vec!["RET".to_string(), "C".to_string()],
+        0xD9 => vec!["RETI".to_string(), "".to_string()],
         _ => return None,
     };
 
@@ -44,6 +45,12 @@ pub fn ret_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         address: addr,
         bytes: vec![opcode],
         length: 1,
-        mnemonic,
+        mnemonic: instr.join(" ").to_string(),
+        verb: instr[0].to_string(),
+        operands: if instr[1].is_empty() {
+            vec![]
+        } else {
+            vec![Operand::Conditional(instr[1].to_string())]
+        }
     })
 }
