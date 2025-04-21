@@ -1,4 +1,4 @@
 /target
-/roms/**/*.gb
+/roms/simon/**/*.gb
 /roms/**/*.obj
 *.log
