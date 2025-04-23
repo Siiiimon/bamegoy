@@ -2,3 +2,4 @@
 /roms/simon/**/*.gb
 /roms/**/*.obj
 *.log
+.idea/**

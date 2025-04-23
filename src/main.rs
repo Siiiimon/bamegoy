@@ -1,8 +1,8 @@
 use bus::Bus;
 use disassemble::disassemble;
 use eframe::egui;
+use std::{cell::RefCell, env, fs, rc::Rc, time::{Duration, Instant}};
 use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, draw_memory_panel, draw_serial_panel, settings::SettingsView};
-use std::{cell::RefCell, env, fs, path::Path, rc::Rc, time::{Duration, Instant}};
 
 pub mod bus;
 pub mod cpu;
@@ -54,11 +54,11 @@ struct BamegoyApp {
 }
 
 impl BamegoyApp {
-    pub fn new(rom_filepath: Option<&Path>, should_trace_log: bool) -> Self {
+    pub fn new(rom_filepath: Option<String>, should_trace_log: bool) -> Self {
         let cartridge_rom: Vec<u8> = match rom_filepath {
-            Some(p) => match fs::read(p) {
+            Some(p) => match fs::read(&p) {
                 Err(e) => {
-                    eprintln!("failed to read {:?}: {}", p, e);
+                    eprintln!("failed to read {:?}: {}", env::current_dir().unwrap().join(p), e);
                     vec![0; 0x8000]
                 }
                 Ok(c) => c,
@@ -92,17 +92,15 @@ fn main() -> eframe::Result {
     env_logger::init();
     let args: Vec<String> = env::args().collect();
 
+    let rom_filepath = Some("C:\\projects\\bamegoy\\roms\\blargg\\cpu_instrs\\individual\\01-special.gb".to_string());
+
     let mut should_trace_log = false;
-    for arg in env::args().skip(1) {
+    for arg in args.into_iter().skip(1) {
         if arg == "--trace" {
             should_trace_log = true;
         }
     }
 
-    let rom_filepath: Option<&Path> = match args.get(1) {
-        Some(p) => Some(Path::new(p)),
-        None => None,
-    };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_inner_size([680.0, 720.0]),
         ..Default::default()
