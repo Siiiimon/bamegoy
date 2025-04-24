@@ -90,9 +90,9 @@ impl BamegoyApp {
 
 fn main() -> eframe::Result {
     env_logger::init();
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
 
-    let rom_filepath = Some("C:\\projects\\bamegoy\\roms\\blargg\\cpu_instrs\\individual\\01-special.gb".to_string());
+    let rom_filepath = args.pop();
 
     let mut should_trace_log = false;
     for arg in args.into_iter().skip(1) {
