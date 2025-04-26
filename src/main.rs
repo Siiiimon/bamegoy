@@ -1,14 +1,10 @@
-use bus::Bus;
-use disassemble::disassemble;
+use emulator::bus::Bus;
+use emulator::disassemble::disassemble;
 use eframe::egui;
 use std::{cell::RefCell, env, fs, rc::Rc, time::{Duration, Instant}};
 use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, draw_memory_panel, draw_serial_panel, settings::SettingsView};
 
-pub mod bus;
-pub mod cpu;
-pub mod instruction;
-pub mod disassemble;
-pub mod util;
+pub mod emulator;
 
 mod ui;
 
@@ -47,8 +43,8 @@ impl Default for UiState {
 }
 
 struct BamegoyApp {
-    bus: bus::SharedBus,
-    cpu: cpu::CPU,
+    bus: emulator::bus::SharedBus,
+    cpu: emulator::cpu::CPU,
     ui_state: UiState,
     emulator_state: EmulatorState,
 }
@@ -77,7 +73,7 @@ impl BamegoyApp {
 
         Self {
             bus: b.clone(),
-            cpu: cpu::CPU::new(b.clone(), should_trace_log),
+            cpu: emulator::cpu::CPU::new(b.clone(), should_trace_log),
             ui_state: UiState::default(),
             emulator_state: EmulatorState {
                 run_state: RunState::Paused,

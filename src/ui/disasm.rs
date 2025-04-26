@@ -1,8 +1,8 @@
-use crate::disassemble::Operand;
-use crate::{disassemble, util::color32_from_catppuccin_with_alpha};
+use crate::emulator::disassemble::{disassemble, Operand};
+use crate::emulator::{disassemble, util::color32_from_catppuccin_with_alpha};
 use egui::{Color32, FontId, TextFormat, text::LayoutJob};
-
-use crate::{COLORS, UiState, bus::SharedBus, cpu::CPU, util::color32_from_catppuccin};
+use crate::{COLORS, UiState};
+use crate::emulator::{bus::SharedBus, cpu::CPU, util::color32_from_catppuccin};
 
 use super::breakpoints::Breakpoint;
 

@@ -4,8 +4,8 @@ use egui::RichText;
 
 use crate::{
     EmulatorState, RunState, UiState,
-    bus::{SharedBus, io::serial},
-    cpu::CPU,
+    emulator::bus::{SharedBus, io::serial},
+    emulator::cpu::CPU,
     disassemble,
 };
 
