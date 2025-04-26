@@ -58,7 +58,7 @@ impl BamegoyApp {
         let cartridge_rom: Vec<u8> = match rom_filepath {
             Some(p) => match fs::read(&p) {
                 Err(e) => {
-                    eprintln!("failed to read {:?}: {}", env::current_dir().unwrap().join(p), e);
+                    eprintln!("failed to read {:?}: {}", p, e);
                     vec![0; 0x8000]
                 }
                 Ok(c) => c,
