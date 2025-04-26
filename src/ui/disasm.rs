@@ -2,7 +2,7 @@ use crate::emulator::disassemble::{disassemble, Operand};
 use crate::emulator::{disassemble, util::color32_from_catppuccin_with_alpha};
 use egui::{Color32, FontId, TextFormat, text::LayoutJob};
 use crate::{COLORS, UiState};
-use crate::emulator::{bus::SharedBus, cpu::CPU, util::color32_from_catppuccin};
+use crate::emulator::{bus::Bus, cpu::CPU, util::color32_from_catppuccin};
 
 use super::breakpoints::Breakpoint;
 
@@ -28,7 +28,7 @@ pub fn draw_disassembly_panel(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
     cpu: &CPU,
-    bus: &mut SharedBus,
+    bus: &mut Bus,
 ) {
     ui.heading("Disassembly");
 
@@ -43,9 +43,9 @@ pub fn draw_disassembly_panel(
     let mut pc = 0x0000;
     let mut instruction_counter = 0;
 
-    while pc < bus.borrow().rom.len() {
+    while pc < bus.rom.len() {
         pc_lookup.push(pc);
-        let disasm = disassemble(&bus.borrow(), pc as u16)
+        let disasm = disassemble(&bus, pc as u16)
             .expect(&format!("No opcode byte at address {:04X}", pc));
         if pc == cpu.pc as usize {
             ui_state.disassembly_view.current_instruction_index = instruction_counter;
@@ -78,7 +78,7 @@ pub fn draw_disassembly_panel(
 
             for row in range {
                 let pc = pc_lookup[row];
-                let disasm = disassemble(&bus.borrow(), pc as u16)
+                let disasm = disassemble(&bus, pc as u16)
                     .expect(&format!("No opcode byte at address {:04X}", pc));
                 let is_active = pc == cpu.pc as usize;
 

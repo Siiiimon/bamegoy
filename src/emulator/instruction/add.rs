@@ -2,13 +2,13 @@ use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm, util};
 
-pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn r8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let register = util::get_register_by_code(opcode & 0b111);
-    let a = cpu.get_register(util::Register::A);
-    let x = cpu.get_register(register);
+    let a = cpu.get_register(bus, util::Register::A);
+    let x = cpu.get_register(bus, register);
 
     let value = x.wrapping_add(a);
-    cpu.set_register(util::Register::A, value);
+    cpu.set_register(bus, util::Register::A, value);
 
     cpu.flags.zero = value == 0;
     cpu.flags.subtraction = false;
@@ -18,12 +18,12 @@ pub fn r8(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc += 1;
 }
 
-pub fn a_n8(cpu: &mut cpu::CPU) {
-    let a = cpu.get_register(util::Register::A);
-    let x = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
+pub fn a_n8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    let a = cpu.get_register(bus, util::Register::A);
+    let x = bus.read_byte(cpu.pc + 1).unwrap();
 
     let value = a.wrapping_add(x);
-    cpu.set_register(util::Register::A, value);
+    cpu.set_register(bus, util::Register::A, value);
 
     cpu.flags.zero = value == 0;
     cpu.flags.subtraction = false;
@@ -48,8 +48,8 @@ pub fn r16(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc += 1;
 }
 
-pub fn sp_e8(cpu: &mut cpu::CPU) {
-    let offset = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap() as i16;
+pub fn sp_e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    let offset = bus.read_byte(cpu.pc + 1).unwrap() as i16;
     let sp = cpu.sp as i16;
     cpu.sp = sp.wrapping_add(offset) as u16;
 

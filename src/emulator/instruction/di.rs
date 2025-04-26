@@ -1,8 +1,8 @@
 use crate::emulator::bus;
 use crate::emulator::{cpu, disassemble::Disasm};
 
-pub fn di(cpu: &mut cpu::CPU) {
-    cpu.bus.borrow_mut().interrupts.ime = false;
+pub fn di(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    bus.interrupts.ime = false;
     cpu.pc += 1;
 }
 

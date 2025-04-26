@@ -1,9 +1,10 @@
-use crate::emulator::bus;
 use crate::disassemble;
+use crate::emulator::bus;
+use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
+use crate::emulator::util::get_register_pair_by_code;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
-use crate::emulator::util::get_register_pair_by_code;
 
 pub struct Flags {
     pub zero: bool,
@@ -49,13 +50,11 @@ pub struct CPU {
 
     pub is_halting: bool,
 
-    pub bus: bus::SharedBus,
-
     pub should_trace_log: bool,
 }
 
 impl CPU {
-    pub fn new(bus: bus::SharedBus, should_trace_log: bool) -> Self {
+    pub fn new(should_trace_log: bool) -> Self {
         Self {
             a: 0x01,
             b: 0x00,
@@ -74,29 +73,30 @@ impl CPU {
             pc: 0x0100,
             ie_enable_delay: false,
             is_halting: false,
-            bus,
             should_trace_log,
         }
     }
 
-    pub fn reset(&mut self, bus: bus::SharedBus) {
-        *self = CPU::new(bus, self.should_trace_log);
+    pub fn reset(&mut self) {
+        // TODO: reset bus as well
+        *self = CPU::new(self.should_trace_log);
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self, bus: &mut Bus) {
+
         if self.ie_enable_delay {
             self.ie_enable_delay = false;
-            self.bus.borrow_mut().interrupts.ime = true;
+            bus.interrupts.ime = true;
         }
 
         if self.is_halting {
             return;
         }
 
-        self.handle_interrupts();
+        self.handle_interrupts(bus);
 
         // fetch
-        let opcode = match self.bus.borrow().read_byte(self.pc) {
+        let opcode = match bus.read_byte(self.pc) {
             Ok(byte) => byte,
             Err(e) => {
                 eprintln!("{}", e);
@@ -110,7 +110,7 @@ impl CPU {
                 self.pc += 1;
             }
             0o363 => {
-                instruction::di::di(self);
+                instruction::di::di(self, bus);
             }
             0o373 => {
                 instruction::ei::ei(self);
@@ -127,103 +127,103 @@ impl CPU {
                 }
             }
             0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
-                instruction::inc::r8(self, opcode);
+                instruction::inc::r8(self, bus, opcode);
             }
             0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
-                instruction::dec::r8(self, opcode);
+                instruction::dec::r8(self, bus, opcode);
             }
             0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => {
-                instruction::ld::r8_n8(self, opcode);
+                instruction::ld::r8_n8(self, bus, opcode);
             }
             0o100..=0o175 | 0o167..=0o177 => {
-                instruction::ld::r8_r8(self, opcode);
+                instruction::ld::r8_r8(self, bus, opcode);
             }
             0o01 | 0o21 | 0o41 | 0o61 => {
-                instruction::ld::r16_n16(self, opcode);
+                instruction::ld::r16_n16(self, bus, opcode);
             }
             0o02 | 0o22 => {
-                instruction::ld::addr_of_r16_a(self, opcode);
+                instruction::ld::addr_of_r16_a(self, bus, opcode);
             }
             0o12 | 0o32 => {
-                instruction::ld::a_addr_of_r16(self, opcode);
+                instruction::ld::a_addr_of_r16(self, bus, opcode);
             }
-            0o42 => instruction::ld::addr_of_hl_a(self, true),
-            0o52 => instruction::ld::a_addr_of_hl(self, true),
-            0o62 => instruction::ld::addr_of_hl_a(self, false),
-            0o72 => instruction::ld::a_addr_of_hl(self, false),
-            0o352 => instruction::ld::a16_a(self),
-            0o372 => instruction::ld::a_a16(self),
-            0o10 => instruction::ld::a16_sp(self),
-            0o370 => instruction::ld::hl_sp_e8(self),
-            0o340 => instruction::ldh::a8_a(self),
-            0o360 => instruction::ldh::a_a8(self),
-            0o342 => instruction::ldh::c_a(self),
-            0o362 => instruction::ldh::a_c(self),
+            0o42 => instruction::ld::addr_of_hl_a(self, bus, true),
+            0o52 => instruction::ld::a_addr_of_hl(self, bus, true),
+            0o62 => instruction::ld::addr_of_hl_a(self, bus, false),
+            0o72 => instruction::ld::a_addr_of_hl(self, bus, false),
+            0o352 => instruction::ld::a16_a(self, bus),
+            0o372 => instruction::ld::a_a16(self, bus),
+            0o10 => instruction::ld::a16_sp(self, bus),
+            0o370 => instruction::ld::hl_sp_e8(self, bus),
+            0o340 => instruction::ldh::a8_a(self, bus),
+            0o360 => instruction::ldh::a_a8(self, bus),
+            0o342 => instruction::ldh::c_a(self, bus),
+            0o362 => instruction::ldh::a_c(self, bus),
             0o301 | 0o321 | 0o341 | 0o361 => {
-                instruction::pop::r16(self, opcode);
+                instruction::pop::r16(self, bus, opcode);
             }
             0o305 | 0o325 | 0o345 | 0o365 => {
-                instruction::push::r16(self, opcode);
+                instruction::push::r16(self, bus, opcode);
             }
             0o200..=0o207 => {
-                instruction::add::r8(self, opcode);
+                instruction::add::r8(self, bus, opcode);
             }
             0o11 | 0o31 | 0o51 | 0o71 => {
                 instruction::add::r16(self, opcode);
             }
-            0o350 => instruction::add::sp_e8(self),
-            0o306 => instruction::add::a_n8(self),
+            0o350 => instruction::add::sp_e8(self, bus),
+            0o306 => instruction::add::a_n8(self, bus),
             0o210..=0o217 => {
-                instruction::adc::r8(self, opcode);
+                instruction::adc::r8(self, bus, opcode);
             }
-            0o316 => instruction::adc::a_n8(self),
+            0o316 => instruction::adc::a_n8(self, bus),
             0o220..=0o227 => {
-                instruction::sub::r8(self, opcode);
+                instruction::sub::r8(self, bus, opcode);
             }
-            0o326 => instruction::sub::a_n8(self),
+            0o326 => instruction::sub::a_n8(self, bus),
             0o230..=0o237 => {
-                instruction::sbc::r8(self, opcode);
+                instruction::sbc::r8(self, bus, opcode);
             }
-            0o336 => instruction::sbc::a_n8(self),
+            0o336 => instruction::sbc::a_n8(self, bus),
             0o240..=0o247 => {
-                instruction::and::r8(self, opcode);
+                instruction::and::r8(self, bus, opcode);
             }
-            0o346 => instruction::and::a_n8(self),
+            0o346 => instruction::and::a_n8(self, bus),
             0o250..=0o257 => {
-                instruction::xor::r8(self, opcode);
+                instruction::xor::r8(self, bus, opcode);
             }
-            0o356 => instruction::xor::a_n8(self),
+            0o356 => instruction::xor::a_n8(self, bus),
             0o260..=0o267 => {
-                instruction::or::r8(self, opcode);
+                instruction::or::r8(self, bus, opcode);
             }
-            0o366 => instruction::or::a_n8(self),
+            0o366 => instruction::or::a_n8(self, bus),
             0o270..=0o277 => {
-                instruction::cp::r8(self, opcode);
+                instruction::cp::r8(self, bus, opcode);
             }
-            0o07 => instruction::rotate::rlca(self),
-            0o17 => instruction::rotate::rrca(self),
-            0o27 => instruction::rotate::rla(self),
-            0o37 => instruction::rotate::rra(self),
-            0o47 => instruction::accumulator::daa(self),
-            0o57 => instruction::accumulator::cpl(self),
+            0o07 => instruction::rotate::rlca(self, bus),
+            0o17 => instruction::rotate::rrca(self, bus),
+            0o27 => instruction::rotate::rla(self, bus),
+            0o37 => instruction::rotate::rra(self, bus),
+            0o47 => instruction::accumulator::daa(self, bus),
+            0o57 => instruction::accumulator::cpl(self, bus),
             0o67 => instruction::carry::scf(self),
             0o77 => instruction::carry::ccf(self),
-            0o376 => instruction::cp::a_n8(self),
+            0o376 => instruction::cp::a_n8(self, bus),
             0o30 | 0o40 | 0o50 | 0o60 | 0o70 => {
-                instruction::jump::e8(self, opcode);
+                instruction::jump::e8(self, bus, opcode);
             }
             0o351 => instruction::jump::hl(self),
             0o302 | 0o303 | 0o312 | 0o322 | 0o332 => {
-                instruction::jump::a16(self, opcode);
+                instruction::jump::a16(self, bus, opcode);
             }
             0o300 | 0o310 | 0o311 | 0o320 | 0o330 | 0o331 => {
-                instruction::ret::ret(self, opcode);
+                instruction::ret::ret(self, bus, opcode);
             }
             0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
-                instruction::call::call(self, opcode);
+                instruction::call::call(self, bus, opcode);
             }
             0o307 | 0o317 | 0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => {
-                instruction::rst::rst(self, opcode);
+                instruction::rst::rst(self, bus, opcode);
             }
             0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
             | 0o375 => {
@@ -235,7 +235,7 @@ impl CPU {
         }
 
         if self.should_trace_log {
-            if let Some(disasm) = disassemble(&self.bus.borrow(), self.pc) {
+            if let Some(disasm) = disassemble(&*bus, self.pc) {
                 println!(
                     "{:04X}: {:<12} | A:{:02X} F:{}{}{}{} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X}",
                     disasm.address,
@@ -254,7 +254,7 @@ impl CPU {
         }
     }
 
-    pub fn get_register(&self, register: Register) -> u8 {
+    pub fn get_register(&self, bus: &mut Bus, register: Register) -> u8 {
         match register {
             Register::A => self.a,
             Register::B => self.b,
@@ -263,9 +263,7 @@ impl CPU {
             Register::E => self.e,
             Register::H => self.h,
             Register::L => self.l,
-            Register::HL => self
-                .bus
-                .borrow()
+            Register::HL => bus
                 .read_byte(((self.h as u16) << 8) | (self.l as u16))
                 .unwrap(),
         }
@@ -285,7 +283,7 @@ impl CPU {
         self.flags.carry = content & 0b0001_0000 != 0;
     }
 
-    pub fn set_register(&mut self, register: Register, val: u8) {
+    pub fn set_register(&mut self, bus: &mut Bus, register: Register, val: u8) {
         match register {
             Register::A => self.a = val,
             Register::B => self.b = val,
@@ -294,9 +292,7 @@ impl CPU {
             Register::E => self.e = val,
             Register::H => self.h = val,
             Register::L => self.l = val,
-            Register::HL => self
-                .bus
-                .borrow_mut()
+            Register::HL => bus
                 .write_byte(((self.h as u16) << 8) | (self.l as u16), val)
                 .unwrap(),
         }
@@ -331,8 +327,8 @@ impl CPU {
         }
     }
 
-    fn handle_interrupts(&mut self) {
-        let interrupts = &mut self.bus.borrow_mut().interrupts;
+    fn handle_interrupts(&mut self, bus: &mut Bus) {
+        let interrupts = &mut bus.interrupts;
         if !interrupts.ime {
             return;
         };
@@ -344,7 +340,7 @@ impl CPU {
 
                 // 2 NOP
 
-                if let Err(e) = self.bus.borrow_mut().push_word(&mut self.sp, self.pc) {
+                if let Err(e) = bus.push_word(&mut self.sp, self.pc) {
                     eprintln!("Failed to push PC during interrupt: {}", e);
                     return;
                 }

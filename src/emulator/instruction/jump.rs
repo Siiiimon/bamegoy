@@ -2,8 +2,8 @@ use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm, util};
 
-pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
-    let target = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
+pub fn a16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
+    let target = bus.read_word(cpu.pc + 1).unwrap();
 
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,
@@ -20,8 +20,8 @@ pub fn a16(cpu: &mut cpu::CPU, opcode: u8) {
     }
 }
 
-pub fn e8(cpu: &mut cpu::CPU, opcode: u8) {
-    let offset = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap() as i8;
+pub fn e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
+    let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8;
     let target = if offset < 0 {
         cpu.pc.wrapping_add(2).wrapping_sub((-offset) as u16)
     } else {

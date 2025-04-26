@@ -1,11 +1,11 @@
-use std::{cell::RefCell, rc::Rc};
 use error::BusError;
 use io::interrupts::InterruptKind;
+use std::sync::{Arc, Mutex};
 
 mod error;
 pub mod io;
 
-pub type SharedBus = Rc<RefCell<Bus>>;
+pub type SharedBus = Arc<Mutex<Bus>>;
 
 pub struct Bus {
     pub rom: Box<[u8]>,

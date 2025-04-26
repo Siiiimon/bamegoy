@@ -1,65 +1,68 @@
-use std::time::Instant;
+use egui::{Context, RichText};
+use std::sync::mpsc::Sender;
 
-use egui::RichText;
-
-use crate::{
-    EmulatorState, RunState, UiState,
-    emulator::bus::{SharedBus, io::serial},
-    emulator::cpu::CPU,
-    disassemble,
-};
+use crate::emulator::bus::Bus;
+use crate::emulator::cpu::CPU;
+use crate::emulator::{DriverMessage, Handle};
+use crate::emulator::bus::io::serial;
+use crate::emulator::disassemble::disassemble;
+use crate::UiState;
 
 pub mod settings;
 pub mod tabbar;
 pub mod breakpoints;
 pub mod disasm;
+mod control_panel;
 
-pub fn draw_control_panel(
-    ctx: &egui::Context,
-    cpu: &mut CPU,
-    bus: SharedBus,
-    ui_state: &mut UiState,
-    emulator_state: &mut EmulatorState,
-) {
-    egui::TopBottomPanel::top("controls_panel").show(ctx, |ui| {
-        ui.horizontal(|ui| {
-            if ui.button("Settings").clicked() {
-                ui_state.settings_view.show_settings_view = true;
-            }
-        });
-        ui.separator();
-        ui.horizontal(|ui| {
-            if ui.button("⏵").on_hover_text("Step").clicked() {
-                cpu.step();
-            }
-
-            if emulator_state.run_state == RunState::Running {
-                if ui.button("⏸").on_hover_text("Pause").clicked() {
-                    emulator_state.run_state = RunState::Paused;
-                }
-            } else {
-                if ui.button("▶").on_hover_text("Continue").clicked() {
-                    emulator_state.run_state = RunState::Running;
-                    emulator_state.last_step_time = Instant::now();
-                }
-            }
-
-            if ui.button("⟳").on_hover_text("Reset").clicked() {
-                cpu.reset(bus);
-            }
-
-            if ui.button("B").on_hover_text("Breakpoints").clicked() {
-                ui_state.breakpoint_view.show_breakpoint_view = !ui_state.breakpoint_view.show_breakpoint_view;
-            }
-
-            // ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            //     ui.label(format!("Loaded ROM: {}", self.rom_path.clone()));
-            // })
-        });
+pub fn draw_error(ctx: &Context, msg: String) {
+    egui::CentralPanel::default().show(ctx, |ui| {
+        ui.label(format!("error: {}", msg));
     });
 }
 
-pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
+pub fn draw_running(ctx: &Context, handle: &mut Handle) {
+    egui::CentralPanel::default().show(ctx, |ui| {
+        ui.label("emulator running, data unavailable.");
+        if ui.button("Pause").clicked() {
+            handle.tx.send(DriverMessage::PauseRequest).unwrap();
+        }
+    });
+}
+
+pub fn draw(ctx: &Context, state: &mut UiState, tx: Sender<DriverMessage>, bus: &mut Bus, cpu: &mut CPU) {
+    control_panel::draw(ctx, cpu, state, tx);
+
+    egui::SidePanel::left("info_panel").show(ctx, |ui| {
+        draw_info_panel(ui, &cpu, bus);
+    });
+
+    egui::TopBottomPanel::bottom("rom_panel")
+        .default_height(250.0)
+        .resizable(true)
+        .show(ctx, |ui| {
+            tabbar::tabbar(ui, &vec!["memory".into(), "serial".into()], &mut state.bottom_panel_selected_tab);
+            match state.bottom_panel_selected_tab {
+                0 => {
+                    draw_memory_panel(ui, &cpu, bus);
+                }
+                1 => {
+                    draw_serial_panel(ui, &bus.serial);
+                }
+                _ => unreachable!()
+            }
+        });
+
+    egui::CentralPanel::default().show(ctx, |ui| {
+        disasm::draw_disassembly_panel(ui, state, &cpu, bus);
+    });
+
+    settings::draw_settings_window(ctx, &mut state.settings_view, cpu);
+
+    breakpoints::draw_breakpoint_list_window(ctx, &mut state.breakpoint_view);
+}
+
+
+pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
     ui.heading("CPU");
 
     ui.monospace(format!("PC:  {:04X}", cpu.pc));
@@ -82,7 +85,7 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
 
     ui.separator();
     ui.label("current instruction:");
-    if let Some(disasm) = disassemble(&bus.borrow(), cpu.pc) {
+    if let Some(disasm) = disassemble(&bus, cpu.pc) {
         ui.monospace(format!("mnemonic: {}", disasm.mnemonic));
         ui.monospace(format!(
             "bytes: {}",
@@ -96,7 +99,7 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
     }
 }
 
-pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
+pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
     ui.heading("Memory");
 
     egui::ScrollArea::vertical().show_rows(
@@ -104,7 +107,7 @@ pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut SharedBus) {
         ui.text_style_height(&egui::TextStyle::Monospace),
         0x8000 / 16,
         |ui, row_range| {
-            let rom = &bus.borrow().rom;
+            let rom = &bus.rom;
 
             for row in row_range {
                 let addr = row * 16;
@@ -189,4 +192,3 @@ pub fn draw_serial_panel(ui: &mut egui::Ui, serial: &serial::Serial) {
     ui.monospace(format!("Hex:   {}", hex));
     ui.monospace(format!("ASCII: {}", ascii));
 }
-

@@ -1,8 +1,8 @@
 use crate::emulator::{bus, cpu, disassemble::{Disasm, Operand}};
 
-pub fn call(cpu: &mut cpu::CPU, opcode: u8) {
-    let lo = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap();
-    let hi = cpu.bus.borrow().read_byte(cpu.pc + 2).unwrap();
+pub fn call(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
+    let lo = bus.read_byte(cpu.pc + 1).unwrap();
+    let hi = bus.read_byte(cpu.pc + 2).unwrap();
 
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,
@@ -13,7 +13,7 @@ pub fn call(cpu: &mut cpu::CPU, opcode: u8) {
     };
 
     if should_jump || opcode == 0o315 {
-        let _ = cpu.bus.borrow_mut().push_word(&mut cpu.sp, cpu.pc + 3);
+        let _ = bus.push_word(&mut cpu.sp, cpu.pc + 3);
         cpu.pc = ((hi as u16) << 8) | lo as u16;
     } else {
         cpu.pc += 3;

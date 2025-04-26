@@ -2,10 +2,10 @@ use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm};
 
-pub fn rst(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn rst(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let addr = ((opcode >> 3) & 0b111) * 8;
 
-    let _ = cpu.bus.borrow_mut().push_word(&mut cpu.sp, cpu.pc + 1);
+    let _ = bus.push_word(&mut cpu.sp, cpu.pc + 1);
     cpu.pc = addr as u16;
 }
 

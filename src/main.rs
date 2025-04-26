@@ -1,8 +1,10 @@
-use emulator::bus::Bus;
-use emulator::disassemble::disassemble;
+use crate::emulator::{DriverMessage, Emulator, EmulatorMessage, Handle, State};
 use eframe::egui;
-use std::{cell::RefCell, env, fs, rc::Rc, time::{Duration, Instant}};
-use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, draw_memory_panel, draw_serial_panel, settings::SettingsView};
+use emulator::disassemble::disassemble;
+use std::sync::mpsc::TryRecvError;
+use std::{env, fs};
+use std::sync::{TryLockError, TryLockResult};
+use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, settings::SettingsView};
 
 pub mod emulator;
 
@@ -11,6 +13,7 @@ mod ui;
 const COLORS: catppuccin::FlavorColors = catppuccin::PALETTE.macchiato.colors;
 
 pub struct UiState {
+    emulator_state: State,
     last_pc: u16,
     bottom_panel_selected_tab: usize,
     settings_view: SettingsView,
@@ -18,21 +21,10 @@ pub struct UiState {
     breakpoint_view: BreakpointView,
 }
 
-pub struct EmulatorState {
-    pub run_state: RunState,
-    pub last_step_time: Instant,
-    pub step_interval: Duration,
-}
-
-#[derive(PartialEq)]
-pub enum RunState {
-    Paused,
-    Running,
-}
-
 impl Default for UiState {
     fn default() -> Self {
         Self {
+            emulator_state: State::Paused,
             last_pc: 0,
             bottom_panel_selected_tab: 0,
             settings_view: SettingsView::default(),
@@ -43,10 +35,8 @@ impl Default for UiState {
 }
 
 struct BamegoyApp {
-    bus: emulator::bus::SharedBus,
-    cpu: emulator::cpu::CPU,
+    emulator_handle: Handle,
     ui_state: UiState,
-    emulator_state: EmulatorState,
 }
 
 impl BamegoyApp {
@@ -62,17 +52,11 @@ impl BamegoyApp {
             None => vec![0; 0x8000],
         };
 
-        let b = Rc::new(RefCell::new(Bus::from_cartridge_rom(cartridge_rom).unwrap()));
+        let handle = Emulator::init(cartridge_rom, should_trace_log);
 
         Self {
-            bus: b.clone(),
-            cpu: emulator::cpu::CPU::new(b.clone(), should_trace_log),
+            emulator_handle: handle,
             ui_state: UiState::default(),
-            emulator_state: EmulatorState {
-                run_state: RunState::Paused,
-                last_step_time: Instant::now(),
-                step_interval: Duration::from_millis(100),
-            },
         }
     }
 }
@@ -107,53 +91,40 @@ fn main() -> eframe::Result {
 
 impl eframe::App for BamegoyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-
-        if self.emulator_state.run_state == RunState::Running {
-
-            for bp in &self.ui_state.breakpoint_view.breakpoints {
-                if bp.addr == self.cpu.pc {
-                    self.emulator_state.run_state = RunState::Paused;
+        match self.emulator_handle.rx.try_recv() {
+            Ok(msg) => {
+                match msg {
+                    EmulatorMessage::Paused => {
+                        self.ui_state.emulator_state = State::Paused;
+                        println!("got paused msg");
+                    },
+                    EmulatorMessage::Running => {
+                        self.ui_state.emulator_state = State::Running;
+                    },
+                }
+            },
+            Err(e) => {
+                if e != TryRecvError::Empty {
+                    ui::draw_error(ctx, "Channel Disconnected".to_string());
                     return;
                 }
-            }
-
-            let now = Instant::now();
-            if now.duration_since(self.emulator_state.last_step_time) >= self.emulator_state.step_interval {
-                self.cpu.step();
-                self.emulator_state.last_step_time = now;
-            }
-
-            ctx.request_repaint();
+            },
         }
 
-        ui::draw_control_panel(ctx, &mut self.cpu, self.bus.clone(), &mut self.ui_state, &mut self.emulator_state);
-
-        egui::SidePanel::left("info_panel").show(ctx, |ui| {
-            ui::draw_info_panel(ui, &self.cpu, &mut self.bus);
-        });
-
-        egui::TopBottomPanel::bottom("rom_panel")
-            .default_height(250.0)
-            .resizable(true)
-            .show(ctx, |ui| {
-                ui::tabbar::tabbar(ui, &vec!["memory".into(), "serial".into()], &mut self.ui_state.bottom_panel_selected_tab);
-                match self.ui_state.bottom_panel_selected_tab {
-                    0 => {
-                        draw_memory_panel(ui, &self.cpu, &mut self.bus);
-                    }
-                    1 => {
-                        draw_serial_panel(ui, &self.bus.borrow().serial);
-                    }
-                    _ => unreachable!()
+        if self.ui_state.emulator_state == State::Running {
+            ui::draw_running(ctx, &mut self.emulator_handle);
+        } else {
+            match (self.emulator_handle.cpu.try_lock(), self.emulator_handle.bus.try_lock()) {
+                (Ok(mut cpu), Ok(mut bus)) => {
+                    ui::draw(ctx, &mut self.ui_state, self.emulator_handle.tx.clone(), &mut *bus, &mut *cpu);
                 }
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui::disasm::draw_disassembly_panel(ui, &mut self.ui_state, &self.cpu, &mut self.bus);
-        });
-
-        ui::settings::draw_settings_window(ctx, &mut self.ui_state.settings_view, &mut self.emulator_state, &mut self.cpu.should_trace_log);
-
-        ui::breakpoints::draw_breakpoint_list_window(ctx, &mut self.ui_state.breakpoint_view);
+                (Err(TryLockError::WouldBlock), _) => ui::draw_error(ctx, "acquiring cpu handle...".to_string()),
+                (_, Err(TryLockError::WouldBlock)) => ui::draw_error(ctx, "acquiring bus handle...".to_string()),
+                (Err(TryLockError::Poisoned(_)), _) |
+                (_, Err(TryLockError::Poisoned(_))) => {
+                    ui::draw_error(ctx, "CPU or Bus lock poisoned!".to_string());
+                }
+            }
+        }
     }
 }

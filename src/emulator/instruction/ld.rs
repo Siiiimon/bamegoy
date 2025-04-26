@@ -2,25 +2,25 @@ use crate::emulator::{bus, cpu};
 use crate::emulator::disassemble::{Disasm, Operand};
 use crate::emulator::util;
 
-pub fn r8_n8(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn r8_n8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let register_code = (opcode >> 3) & 0b111;
     let register = util::get_register_by_code(register_code);
     cpu.pc += 1;
-    let value = match cpu.bus.borrow().read_byte(cpu.pc) {
+    let value = match bus.read_byte(cpu.pc) {
         Ok(byte) => byte,
         Err(e) => {
             eprintln!("{}", e);
             return;
         }
     };
-    cpu.set_register(register, value);
+    cpu.set_register(bus, register, value);
     cpu.pc += 1;
 }
 
-pub fn r16_n16(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn r16_n16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     cpu.pc += 1;
-    let value = match cpu.bus.borrow().read_word(cpu.pc) {
+    let value = match bus.read_word(cpu.pc) {
         Ok(word) => word,
         Err(e) => {
             eprintln!("{}", e);
@@ -31,7 +31,7 @@ pub fn r16_n16(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc += 2;
 }
 
-pub fn r8_r8(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn r8_r8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let dst = util::get_register_by_code((opcode >> 3) & 0b111);
     let src = util::get_register_by_code(opcode & 0b111);
 
@@ -40,16 +40,17 @@ pub fn r8_r8(cpu: &mut cpu::CPU, opcode: u8) {
         return;
     }
 
-    cpu.set_register(dst, cpu.get_register(src));
+    let value = cpu.get_register(bus, src);
+    cpu.set_register(bus, dst, value);
     cpu.pc += 1;
 }
 
-pub fn addr_of_r16_a(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn addr_of_r16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let addr = cpu.get_register_pair(pair);
-    let value = cpu.get_register(util::Register::A);
+    let value = cpu.get_register(bus, util::Register::A);
 
-    match cpu.bus.borrow_mut().write_byte(addr, value) {
+    match bus.write_byte(addr, value) {
         Ok(()) => (),
         Err(e) => eprintln!("{}", e)
     }
@@ -57,11 +58,11 @@ pub fn addr_of_r16_a(cpu: &mut cpu::CPU, opcode: u8) {
     cpu.pc +=1;
 }
 
-pub fn a_addr_of_r16(cpu: &mut cpu::CPU, opcode: u8) {
+pub fn a_addr_of_r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let addr = cpu.get_register_pair(pair);
 
-    let value = match cpu.bus.borrow().read_byte(addr) {
+    let value = match bus.read_byte(addr) {
         Ok(byte) => byte,
         Err(e) => {
             eprintln!("{}", e);
@@ -69,14 +70,14 @@ pub fn a_addr_of_r16(cpu: &mut cpu::CPU, opcode: u8) {
         }
     };
 
-    cpu.set_register(util::Register::A, value);
+    cpu.set_register(bus, util::Register::A, value);
 
     cpu.pc +=1;
 }
 
-pub fn addr_of_hl_a(cpu: &mut cpu::CPU, should_increase: bool) {
-    let value = cpu.get_register(util::Register::A);
-    cpu.set_register(util::Register::HL, value);
+pub fn addr_of_hl_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
+    let value = cpu.get_register(bus, util::Register::A);
+    cpu.set_register(bus, util::Register::HL, value);
 
     let hl = cpu.get_register_pair(util::RegisterPair::HL);
     if should_increase {
@@ -88,9 +89,9 @@ pub fn addr_of_hl_a(cpu: &mut cpu::CPU, should_increase: bool) {
     cpu.pc += 1;
 }
 
-pub fn a_addr_of_hl(cpu: &mut cpu::CPU, should_increase: bool) {
-    let value = cpu.get_register(util::Register::HL);
-    cpu.set_register(util::Register::A, value);
+pub fn a_addr_of_hl(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
+    let value = cpu.get_register(bus, util::Register::HL);
+    cpu.set_register(bus, util::Register::A, value);
 
     let hl = cpu.get_register_pair(util::RegisterPair::HL);
     if should_increase {
@@ -102,35 +103,35 @@ pub fn a_addr_of_hl(cpu: &mut cpu::CPU, should_increase: bool) {
     cpu.pc += 1;
 }
 
-pub fn a16_a(cpu: &mut cpu::CPU) {
-    let addr = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
-    let content = cpu.get_register(util::Register::A);
+pub fn a16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    let addr = bus.read_word(cpu.pc + 1).unwrap();
+    let content = cpu.get_register(bus, util::Register::A);
 
-    let _ = cpu.bus.borrow_mut().write_byte(addr, content);
-
-    cpu.pc += 3;
-}
-
-pub fn a_a16(cpu: &mut cpu::CPU) {
-    let addr = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
-    let content = cpu.bus.borrow().read_byte(addr).unwrap();
-
-    cpu.set_register(util::Register::A, content);
+    let _ = bus.write_byte(addr, content);
 
     cpu.pc += 3;
 }
 
-pub fn a16_sp(cpu: &mut cpu::CPU) {
-    let addr = cpu.bus.borrow().read_word(cpu.pc + 1).unwrap();
+pub fn a_a16(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    let addr = bus.read_word(cpu.pc + 1).unwrap();
+    let content = bus.read_byte(addr).unwrap();
+
+    cpu.set_register(bus, util::Register::A, content);
+
+    cpu.pc += 3;
+}
+
+pub fn a16_sp(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    let addr = bus.read_word(cpu.pc + 1).unwrap();
     let sp = cpu.get_register_pair(util::RegisterPair::SP);
 
-    let _ = cpu.bus.borrow_mut().write_word(addr, sp);
+    let _ = bus.write_word(addr, sp);
     cpu.pc += 3;
 }
 
-pub fn hl_sp_e8(cpu: &mut cpu::CPU) {
+pub fn hl_sp_e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let sp = cpu.sp;
-    let offset = cpu.bus.borrow().read_byte(cpu.pc + 1).unwrap() as i8 as i16;
+    let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8 as i16;
 
     let result = (sp as i16).wrapping_add(offset) as u16;
     cpu.set_register_pair(util::RegisterPair::HL, result);

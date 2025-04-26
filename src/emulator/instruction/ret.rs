@@ -2,8 +2,8 @@ use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm};
 
-pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
-    let addr = match cpu.bus.borrow_mut().pop_word(&mut cpu.sp) {
+pub fn ret(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
+    let addr = match bus.pop_word(&mut cpu.sp) {
         Ok(addr) => addr,
         Err(e) => {
             panic!("Failed to pop return address: {}", e);
@@ -22,7 +22,7 @@ pub fn ret(cpu: &mut cpu::CPU, opcode: u8) {
 
     if should_jump || opcode == 0o311 | 0o331 {
         if opcode == 0o331 {
-            cpu.bus.borrow_mut().interrupts.ime = true;
+            bus.interrupts.ime = true;
         }
         cpu.pc = addr;
     } else {

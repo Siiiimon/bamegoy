@@ -1,9 +1,9 @@
 use crate::emulator::bus;
 use crate::emulator::{cpu, disassemble::Disasm, util};
 
-pub fn cpl(cpu: &mut cpu::CPU) {
-    let value = cpu.get_register(util::Register::A);
-    cpu.set_register(util::Register::A, !value);
+pub fn cpl(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
+    let value = cpu.get_register(bus, util::Register::A);
+    cpu.set_register(bus, util::Register::A, !value);
 
     cpu.flags.subtraction = true;
     cpu.flags.half_carry = true;
@@ -11,9 +11,9 @@ pub fn cpl(cpu: &mut cpu::CPU) {
     cpu.pc += 1;
 }
 
-pub fn daa(cpu: &mut cpu::CPU) {
+pub fn daa(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let mut adjustment = 0;
-    let mut a = cpu.get_register(util::Register::A);
+    let mut a = cpu.get_register(bus, util::Register::A);
     if cpu.flags.subtraction {
         if cpu.flags.half_carry {
             adjustment += 0x6;
@@ -33,7 +33,7 @@ pub fn daa(cpu: &mut cpu::CPU) {
         a = a + adjustment;
     }
 
-    cpu.set_register(util::Register::A, a);
+    cpu.set_register(bus, util::Register::A, a);
 
     cpu.flags.zero = a == 0;
     cpu.flags.half_carry = false;
