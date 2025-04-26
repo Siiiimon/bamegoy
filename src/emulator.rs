@@ -5,12 +5,14 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex, TryLockError};
 use std::thread;
 use std::time::{Duration, Instant};
+use crate::emulator::policy::Policy;
 
 pub mod bus;
 pub mod cpu;
 pub mod instruction;
 pub mod disassemble;
 pub mod util;
+pub mod policy;
 
 pub struct Emulator {
     runtime: Runtime,
@@ -24,7 +26,8 @@ pub struct Runtime {
     step_interval: Duration,
 
     tx: Sender<EmulatorMessage>,
-    rx: Receiver<DriverMessage>
+    rx: Receiver<DriverMessage>,
+    policy: Option<Policy>,
 }
 
 #[derive(PartialEq)]
@@ -41,9 +44,8 @@ pub struct Handle {
     pub bus: Arc<Mutex<Bus>>,
 }
 
-#[derive(Debug, PartialEq)]
 pub enum DriverMessage {
-    Run,
+    Run(Option<Policy>),
     PauseRequest,
 }
 
@@ -65,6 +67,7 @@ impl Emulator {
                 step_interval: Duration::from_millis(100),
                 tx,
                 rx,
+                policy: None,
             },
 
             bus: Arc::new(Mutex::new(bus)),
@@ -78,8 +81,9 @@ impl Emulator {
         loop {
             let msg = self.runtime.rx.try_recv();
             match msg {
-                Ok(DriverMessage::Run) => {
+                Ok(DriverMessage::Run(policy)) => {
                     self.runtime.state = State::Running;
+                    self.runtime.policy = policy;
                     self.runtime.tx.send(EmulatorMessage::Running).unwrap();
                 }
                 Ok(DriverMessage::PauseRequest) => {
@@ -103,6 +107,12 @@ impl Emulator {
                     match (self.cpu.try_lock(), self.bus.try_lock()) {
                         (Ok(mut cpu), Ok(mut bus)) => {
                             cpu.step(&mut *bus);
+                            if let Some(p) = &mut self.runtime.policy {
+                                if p(&*cpu, &*bus) {
+                                    self.runtime.policy = None;
+                                    self.runtime.state = State::PauseRequested;
+                                }
+                            }
                         }
                         (Err(TryLockError::WouldBlock), _) |
                         (_, Err(TryLockError::WouldBlock)) => {},

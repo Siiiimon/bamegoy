@@ -1,5 +1,5 @@
 use crate::emulator::cpu::CPU;
-use crate::emulator::{DriverMessage, State};
+use crate::emulator::{policy, DriverMessage, State};
 use crate::UiState;
 use std::sync::mpsc::Sender;
 
@@ -18,7 +18,7 @@ pub fn draw(
         ui.separator();
         ui.horizontal(|ui| {
             if ui.button("⏵").on_hover_text("Step").clicked() {
-                // tx.send(...)
+                tx.send(DriverMessage::Run(Some(policy::single_step()))).unwrap();
             }
 
             if state.emulator_state == State::Running {
@@ -27,7 +27,7 @@ pub fn draw(
                 }
             } else {
                 if ui.button("▶").on_hover_text("Continue").clicked() {
-                    tx.send(DriverMessage::Run).unwrap();
+                    tx.send(DriverMessage::Run(None)).unwrap();
                 }
             }
 

@@ -1,5 +1,4 @@
 use crate::disassemble;
-use crate::emulator::bus;
 use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
 use crate::emulator::util::get_register_pair_by_code;
@@ -83,7 +82,6 @@ impl CPU {
     }
 
     pub fn step(&mut self, bus: &mut Bus) {
-
         if self.ie_enable_delay {
             self.ie_enable_delay = false;
             bus.interrupts.ime = true;
