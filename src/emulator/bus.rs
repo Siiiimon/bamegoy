@@ -31,6 +31,13 @@ impl Bus {
         }
     }
 
+    pub fn from_cartridge_rom(cart: Vec<u8>) -> Result<Self, String> {
+        let mut bus = Self::new();
+        if cart.len() > bus.rom.len() { return Err("Cartridge rom too big!".to_string()); }
+        bus.rom[..cart.len()].copy_from_slice(&cart);
+        Ok(bus)
+    }
+
     pub fn read_byte(&self, addr: u16) -> Result<u8, BusError> {
         match addr {
             0x0..0x8000 => {
@@ -134,11 +141,5 @@ impl Bus {
         *sp += 2;
 
         Ok(content)
-    }
-
-    pub fn from_cartridge_rom(&mut self, cart: Vec<u8>) -> Result<(), String> {
-        if cart.len() > self.rom.len() { return Err(format!("Cartridge rom too big!")); }
-        self.rom[..cart.len()].copy_from_slice(&cart);
-        Ok(())
     }
 }

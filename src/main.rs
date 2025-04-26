@@ -62,14 +62,7 @@ impl BamegoyApp {
             None => vec![0; 0x8000],
         };
 
-        let b = Rc::new(RefCell::new(Bus::new()));
-        match b.borrow_mut().from_cartridge_rom(cartridge_rom) {
-            Err(e) => {
-                eprintln!("{}", e);
-                ()
-            }
-            Ok(_) => (),
-        }
+        let b = Rc::new(RefCell::new(Bus::from_cartridge_rom(cartridge_rom).unwrap()));
 
         Self {
             bus: b.clone(),
