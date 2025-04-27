@@ -12,26 +12,6 @@ pub struct Flags {
     pub carry: bool,
 }
 
-pub struct Interrupts {
-    pub vblank: bool,
-    pub lcd: bool,
-    pub timer: bool,
-    pub serial: bool,
-    pub joypad: bool,
-}
-
-impl Default for Interrupts {
-    fn default() -> Self {
-        Self {
-            vblank: false,
-            lcd: false,
-            timer: false,
-            serial: false,
-            joypad: false,
-        }
-    }
-}
-
 pub struct CPU {
     pub a: u8,
     pub b: u8,
