@@ -1,9 +1,9 @@
-use crate::emulator::{DriverMessage, Emulator, EmulatorMessage, Handle, State};
+use crate::emulator::{Emulator, EmulatorMessage, Handle, State};
 use eframe::egui;
 use emulator::disassemble::disassemble;
 use std::sync::mpsc::TryRecvError;
+use std::sync::TryLockError;
 use std::{env, fs};
-use std::sync::{TryLockError, TryLockResult};
 use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, settings::SettingsView};
 
 pub mod emulator;
@@ -96,7 +96,6 @@ impl eframe::App for BamegoyApp {
                 match msg {
                     EmulatorMessage::Paused => {
                         self.ui_state.emulator_state = State::Paused;
-                        println!("got paused msg");
                     },
                     EmulatorMessage::Running => {
                         self.ui_state.emulator_state = State::Running;

@@ -97,10 +97,8 @@ impl Emulator {
 
             match self.runtime.state {
                 State::PauseRequested => {
-                    println!("pause request received");
                     self.runtime.state = State::Paused;
                     self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
-                    println!("set pause state, sent paused message");
                 }
                 State::Paused => {}
                 State::Running => {
