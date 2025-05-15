@@ -1,6 +1,7 @@
 use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm};
+use crate::emulator::bus::BusView;
 
 pub fn ret(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let addr = match bus.pop_word(&mut cpu.sp) {
@@ -30,7 +31,7 @@ pub fn ret(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     }
 }
 
-pub fn ret_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn ret_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let instr = match opcode {
         0xC9 => vec!["RET".to_string(), "".to_string()],
         0xC0 => vec!["RET".to_string(), "NZ".to_string()],

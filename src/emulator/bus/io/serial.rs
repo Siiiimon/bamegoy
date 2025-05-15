@@ -2,7 +2,7 @@ use crate::emulator::bus::error::BusError;
 
 use super::interrupts::Interrupt;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Serial {
     pub content: u8,
     pub control: Control,
@@ -38,7 +38,7 @@ impl Serial {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Control {
     pub enable: bool,
     // is_high_speed: bool,

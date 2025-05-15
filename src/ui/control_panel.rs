@@ -1,11 +1,10 @@
-use crate::emulator::cpu::CPU;
+use crate::emulator::cpu::CpuView;
 use crate::emulator::{policy, DriverMessage, State};
 use crate::UiState;
 use std::sync::mpsc::Sender;
 
 pub fn draw(
     ctx: &egui::Context,
-    cpu: &mut CPU,
     state: &mut UiState,
     tx: Sender<DriverMessage>,
 ) {

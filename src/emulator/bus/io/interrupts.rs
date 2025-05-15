@@ -1,5 +1,6 @@
 use crate::emulator::bus::error::BusError;
 
+#[derive(Clone)]
 pub struct Interrupts {
     pub ime: bool,
     pub registers: [Interrupt; 5],

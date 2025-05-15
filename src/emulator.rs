@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, TryLockError};
 use std::thread;
 use std::time::{Duration, Instant};
 use crate::emulator::policy::Policy;
+use crate::emulator::snapshot::Snapshot;
 
 pub mod bus;
 pub mod cpu;
@@ -13,6 +14,7 @@ pub mod instruction;
 pub mod disassemble;
 pub mod util;
 pub mod policy;
+pub mod snapshot;
 
 pub struct Emulator {
     runtime: Runtime,
@@ -49,10 +51,9 @@ pub enum DriverMessage {
     PauseRequest,
 }
 
-#[derive(Debug, PartialEq)]
 pub enum EmulatorMessage {
     Paused,
-    Running,
+    Running(Option<Snapshot>),
 }
 
 impl Emulator {
@@ -84,7 +85,18 @@ impl Emulator {
                 Ok(DriverMessage::Run(policy)) => {
                     self.runtime.state = State::Running;
                     self.runtime.policy = policy;
-                    self.runtime.tx.send(EmulatorMessage::Running).unwrap();
+
+                    match (self.cpu.try_lock(), self.bus.try_lock()) {
+                        (Ok(cpu), Ok(mut bus)) => {
+                            self.runtime.tx.send(EmulatorMessage::Running(Some(Snapshot::from(&cpu, &mut *bus)))).unwrap();
+                        }
+                        (Err(TryLockError::WouldBlock), _) |
+                        (_, Err(TryLockError::WouldBlock)) => {},
+                        (Err(TryLockError::Poisoned(_)), _) |
+                        (_, Err(TryLockError::Poisoned(_))) => {
+                            panic!("CPU or Bus lock poisoned!");
+                        }
+                    }
                 }
                 Ok(DriverMessage::PauseRequest) => {
                     self.runtime.state = State::PauseRequested;

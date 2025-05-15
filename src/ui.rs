@@ -1,11 +1,12 @@
 use egui::{Context, RichText};
 use std::sync::mpsc::Sender;
 
-use crate::emulator::bus::Bus;
-use crate::emulator::cpu::CPU;
+use crate::emulator::bus::{Bus, BusView};
+use crate::emulator::cpu::{CpuView, CPU};
 use crate::emulator::{DriverMessage, Handle};
 use crate::emulator::bus::io::serial;
 use crate::emulator::disassemble::disassemble;
+use crate::emulator::util::{Register, RegisterPair};
 use crate::UiState;
 
 pub mod settings;
@@ -29,11 +30,11 @@ pub fn draw_running(ctx: &Context, handle: &mut Handle) {
     });
 }
 
-pub fn draw(ctx: &Context, state: &mut UiState, tx: Sender<DriverMessage>, bus: &mut Bus, cpu: &mut CPU) {
-    control_panel::draw(ctx, cpu, state, tx);
+pub fn draw(ctx: &Context, state: &mut UiState, tx: Sender<DriverMessage>, bus: &mut Box<dyn BusView>, cpu: &mut Box<dyn CpuView>) {
+    control_panel::draw(ctx, state, tx);
 
     egui::SidePanel::left("info_panel").show(ctx, |ui| {
-        draw_info_panel(ui, &cpu, bus);
+        draw_info_panel(ui, cpu.clone(), bus);
     });
 
     egui::TopBottomPanel::bottom("rom_panel")
@@ -43,49 +44,50 @@ pub fn draw(ctx: &Context, state: &mut UiState, tx: Sender<DriverMessage>, bus: 
             tabbar::tabbar(ui, &vec!["memory".into(), "serial".into()], &mut state.bottom_panel_selected_tab);
             match state.bottom_panel_selected_tab {
                 0 => {
-                    draw_memory_panel(ui, &cpu, bus);
+                    draw_memory_panel(ui, cpu.clone(), bus);
                 }
                 1 => {
-                    draw_serial_panel(ui, &bus.serial);
+                    draw_serial_panel(ui, bus.get_serial());
                 }
                 _ => unreachable!()
             }
         });
 
     egui::CentralPanel::default().show(ctx, |ui| {
-        disasm::draw_disassembly_panel(ui, state, &cpu, bus);
+        disasm::draw_disassembly_panel(ui, state, cpu.clone(), bus.clone());
     });
 
-    settings::draw_settings_window(ctx, &mut state.settings_view, cpu);
+    settings::draw_settings_window(ctx, &mut state.settings_view, cpu.clone());
 
     breakpoints::draw_breakpoint_list_window(ctx, &mut state.breakpoint_view);
 }
 
 
-pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
+pub fn draw_info_panel(ui: &mut egui::Ui, cpu: Box<dyn CpuView>, bus: &mut Box<dyn BusView>) {
+    let flags = cpu.get_flags();
     ui.heading("CPU");
 
-    ui.monospace(format!("PC:  {:04X}", cpu.pc));
-    ui.monospace(format!("SP:  {:04X}", cpu.sp));
+    ui.monospace(format!("PC:  {:04X}", cpu.get_pc()));
+    ui.monospace(format!("SP:  {:04X}", cpu.get_register_pair(RegisterPair::SP)));
 
     ui.separator();
-    ui.monospace(format!("A:   {:02X}", cpu.a));
+    ui.monospace(format!("A:   {:02X}", cpu.get_register(Register::A)));
     ui.monospace(format!(
         "F:   Z={} N={} H={} C={}",
-        cpu.flags.zero as u8,
-        cpu.flags.subtraction as u8,
-        cpu.flags.half_carry as u8,
-        cpu.flags.carry as u8,
+        flags.zero as u8,
+        flags.subtraction as u8,
+        flags.half_carry as u8,
+        flags.carry as u8,
     ));
 
     ui.separator();
-    ui.monospace(format!("B:   {:02X}    C: {:02X}", cpu.b, cpu.c));
-    ui.monospace(format!("D:   {:02X}    E: {:02X}", cpu.d, cpu.e));
-    ui.monospace(format!("H:   {:02X}    L: {:02X}", cpu.h, cpu.l));
+    ui.monospace(format!("B:   {:02X}    C: {:02X}", cpu.get_register(Register::B), cpu.get_register(Register::C)));
+    ui.monospace(format!("D:   {:02X}    E: {:02X}", cpu.get_register(Register::D), cpu.get_register(Register::E)));
+    ui.monospace(format!("H:   {:02X}    L: {:02X}", cpu.get_register(Register::H), cpu.get_register(Register::L)));
 
     ui.separator();
     ui.label("current instruction:");
-    if let Some(disasm) = disassemble(&bus, cpu.pc) {
+    if let Some(disasm) = disassemble(bus.clone(), cpu.get_pc()) {
         ui.monospace(format!("mnemonic: {}", disasm.mnemonic));
         ui.monospace(format!(
             "bytes: {}",
@@ -99,7 +101,7 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
     }
 }
 
-pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
+pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: Box<dyn CpuView>, bus: Box<dyn BusView>) {
     ui.heading("Memory");
 
     egui::ScrollArea::vertical().show_rows(
@@ -120,7 +122,7 @@ pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
                         let byte_addr = addr + i;
 
                         let text = format!("{:02X}", byte);
-                        let rich = if byte_addr == cpu.pc as usize {
+                        let rich = if byte_addr == cpu.get_pc() as usize {
                             RichText::new(text).color(egui::Color32::YELLOW)
                         } else {
                             RichText::new(text)

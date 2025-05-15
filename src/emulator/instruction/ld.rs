@@ -1,4 +1,6 @@
 use crate::emulator::{bus, cpu};
+use crate::emulator::bus::BusView;
+use crate::emulator::cpu::CpuView;
 use crate::emulator::disassemble::{Disasm, Operand};
 use crate::emulator::util;
 
@@ -76,8 +78,11 @@ pub fn a_addr_of_r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
 }
 
 pub fn addr_of_hl_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
-    let value = cpu.get_register(bus, util::Register::A);
-    cpu.set_register(bus, util::Register::HL, value);
+    let value = cpu.get_register(util::Register::A);
+
+    let h = cpu.get_register(util::Register::H);
+    let l = cpu.get_register(util::Register::L);
+    bus.write_byte(((h as u16) << 8) | (l as u16), value).unwrap();
 
     let hl = cpu.get_register_pair(util::RegisterPair::HL);
     if should_increase {
@@ -90,7 +95,13 @@ pub fn addr_of_hl_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: boo
 }
 
 pub fn a_addr_of_hl(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
-    let value = cpu.get_register(bus, util::Register::HL);
+    //bus
+    //                 .read_byte(((self.h as u16) << 8) | (self.l as u16))
+    //                 .unwrap(),
+    let h = cpu.get_register(util::Register::H);
+    let l = cpu.get_register(util::Register::L);
+    let value = bus.read_byte(((h as u16) << 8) | (l as u16)).unwrap();
+
     cpu.set_register(bus, util::Register::A, value);
 
     let hl = cpu.get_register_pair(util::RegisterPair::HL);
@@ -105,7 +116,7 @@ pub fn a_addr_of_hl(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: boo
 
 pub fn a16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let addr = bus.read_word(cpu.pc + 1).unwrap();
-    let content = cpu.get_register(bus, util::Register::A);
+    let content = cpu.get_register(util::Register::A);
 
     let _ = bus.write_byte(addr, content);
 
@@ -147,7 +158,7 @@ pub fn hl_sp_e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     cpu.pc += 2;
 }
 
-pub fn r8_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn r8_n8_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let reg = util::get_register_by_code((opcode >> 3) & 0b111);
     let content = bus.read_byte(addr + 1).unwrap();
 
@@ -161,7 +172,7 @@ pub fn r8_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn r16_n16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn r16_n16_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let content = bus.read_word(addr + 1).unwrap();
 
@@ -175,7 +186,7 @@ pub fn r16_n16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn r8_r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn r8_r8_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let dst = util::get_register_by_code((opcode >> 3) & 0b111);
     let src = util::get_register_by_code(opcode & 0b111);
     Some(Disasm {
@@ -188,7 +199,7 @@ pub fn r8_r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn addr_of_r16_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn addr_of_r16_a_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     Some(Disasm {
         address: addr,
@@ -200,7 +211,7 @@ pub fn addr_of_r16_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Di
     })
 }
 
-pub fn a_addr_of_r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_addr_of_r16_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     Some(Disasm {
         address: addr,
@@ -212,7 +223,7 @@ pub fn a_addr_of_r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Di
     })
 }
 
-pub fn addr_of_hl_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn addr_of_hl_a_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let hl = if opcode == 0x22 {
         "HL+"
     } else {
@@ -228,7 +239,7 @@ pub fn addr_of_hl_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Dis
     })
 }
 
-pub fn a_addr_of_hl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_addr_of_hl_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let hl = if opcode == 0x2A {
         "HL+"
     } else {
@@ -244,7 +255,7 @@ pub fn a_addr_of_hl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Dis
     })
 }
 
-pub fn a16_a_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a16_a_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let target = bus.read_word(addr).unwrap();
 
     Some(Disasm {
@@ -257,7 +268,7 @@ pub fn a16_a_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn a_a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_a16_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let source = bus.read_word(addr).unwrap();
 
     Some(Disasm {
@@ -270,7 +281,7 @@ pub fn a_a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn a16_sp_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a16_sp_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let dest = bus.read_word(addr).unwrap();
 
     Some(Disasm {
@@ -283,7 +294,7 @@ pub fn a16_sp_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn hl_sp_e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn hl_sp_e8_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let offset = bus.read_byte(addr + 1).unwrap();
 
     Some(Disasm {

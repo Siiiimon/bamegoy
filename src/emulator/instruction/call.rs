@@ -1,4 +1,5 @@
 use crate::emulator::{bus, cpu, disassemble::{Disasm, Operand}};
+use crate::emulator::bus::BusView;
 
 pub fn call(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let lo = bus.read_byte(cpu.pc + 1).unwrap();
@@ -20,7 +21,7 @@ pub fn call(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     }
 }
 
-pub fn call_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn call_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let target = bus.read_word(addr + 1).unwrap();
 
     let instr = match opcode {

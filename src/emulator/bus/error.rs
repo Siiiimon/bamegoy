@@ -1,7 +1,8 @@
 #[derive(Debug)]
 pub enum BusError {
     OutOfBounds(u16),
-    Unimplemented(u16)
+    Unimplemented(u16),
+    WriteToSnapshot(),
 }
 
 impl std::fmt::Display for BusError {
@@ -12,6 +13,9 @@ impl std::fmt::Display for BusError {
             }
             BusError::Unimplemented(addr) => {
                 write!(f, "reading from io address {} is not supported yet", addr)
+            }
+            BusError::WriteToSnapshot() => {
+                write!(f, "Tried to write to read-only memory snapshot!")
             }
         }
     }

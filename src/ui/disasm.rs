@@ -1,10 +1,11 @@
+use super::breakpoints::Breakpoint;
+use crate::emulator::bus::BusView;
+use crate::emulator::cpu::CpuView;
 use crate::emulator::disassemble::{disassemble, Operand};
 use crate::emulator::{disassemble, util::color32_from_catppuccin_with_alpha};
-use egui::{Color32, FontId, TextFormat, text::LayoutJob};
-use crate::{COLORS, UiState};
-use crate::emulator::{bus::Bus, cpu::CPU, util::color32_from_catppuccin};
-
-use super::breakpoints::Breakpoint;
+use crate::emulator::util::color32_from_catppuccin;
+use crate::{UiState, COLORS};
+use egui::{text::LayoutJob, Color32, FontId, TextFormat};
 
 pub struct DisassemblyView {
     pub disasm_should_follow_pc: bool,
@@ -27,8 +28,8 @@ impl Default for DisassemblyView {
 pub fn draw_disassembly_panel(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
-    cpu: &CPU,
-    bus: &mut Bus,
+    cpu: Box<dyn CpuView>,
+    bus: Box<dyn BusView>,
 ) {
     ui.heading("Disassembly");
 
@@ -45,9 +46,9 @@ pub fn draw_disassembly_panel(
 
     while pc < bus.rom.len() {
         pc_lookup.push(pc);
-        let disasm = disassemble(&bus, pc as u16)
+        let disasm = disassemble(bus.clone(), pc as u16)
             .expect(&format!("No opcode byte at address {:04X}", pc));
-        if pc == cpu.pc as usize {
+        if pc == cpu.get_pc() as usize {
             ui_state.disassembly_view.current_instruction_index = instruction_counter;
         }
         pc += disasm.length as usize;
@@ -55,8 +56,8 @@ pub fn draw_disassembly_panel(
     }
 
     let row_height = ui.text_style_height(&egui::TextStyle::Monospace);
-    if cpu.pc != ui_state.last_pc {
-        ui_state.last_pc = cpu.pc;
+    if cpu.get_pc() != ui_state.last_pc {
+        ui_state.last_pc = cpu.get_pc();
 
         if ui_state.disassembly_view.disasm_should_follow_pc {
             ui_state.disassembly_view.scroll_y =
@@ -78,9 +79,9 @@ pub fn draw_disassembly_panel(
 
             for row in range {
                 let pc = pc_lookup[row];
-                let disasm = disassemble(&bus, pc as u16)
+                let disasm = disassemble(bus.clone(), pc as u16)
                     .expect(&format!("No opcode byte at address {:04X}", pc));
-                let is_active = pc == cpu.pc as usize;
+                let is_active = pc == cpu.get_pc() as usize;
 
                 let layout_job = format_mnemonic(pc as u16, disasm, is_active);
 

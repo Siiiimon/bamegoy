@@ -1,10 +1,13 @@
+use std::any::Any;
+use dyn_clone::DynClone;
 use crate::disassemble;
-use crate::emulator::bus::Bus;
+use crate::emulator::bus::{Bus, BusView};
 use crate::emulator::instruction;
 use crate::emulator::util::get_register_pair_by_code;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
 
+#[derive(Debug, Clone)]
 pub struct Flags {
     pub zero: bool,
     pub subtraction: bool,
@@ -12,6 +15,19 @@ pub struct Flags {
     pub carry: bool,
 }
 
+pub trait CpuView: DynClone {
+    fn as_any_mut(&mut self) -> &dyn Any;
+    fn get_register(&self, register: Register) -> u8;
+    fn set_register(&mut self, bus: &mut Bus, register: Register, val: u8);
+    fn get_register_pair(&self, pair: RegisterPair) -> u16;
+    fn set_register_pair(&mut self, pair: RegisterPair, val: u16);
+    fn get_flags(&self) -> Flags;
+    fn get_pc(&self) -> u16;
+    fn is_halting(&self) -> bool;
+}
+dyn_clone::clone_trait_object!(CpuView);
+
+#[derive(Clone)]
 pub struct CPU {
     pub a: u8,
     pub b: u8,
@@ -30,6 +46,76 @@ pub struct CPU {
     pub is_halting: bool,
 
     pub should_trace_log: bool,
+}
+
+impl CpuView for CPU {
+    fn as_any_mut(&mut self) -> &dyn Any {
+        self
+    }
+    fn get_register(&self, register: Register) -> u8 {
+        match register {
+            Register::A => self.a,
+            Register::B => self.b,
+            Register::C => self.c,
+            Register::D => self.d,
+            Register::E => self.e,
+            Register::H => self.h,
+            Register::L => self.l,
+        }
+    }
+
+    fn set_register(&mut self, bus: &mut Bus, register: Register, val: u8) {
+        match register {
+            Register::A => self.a = val,
+            Register::B => self.b = val,
+            Register::C => self.c = val,
+            Register::D => self.d = val,
+            Register::E => self.e = val,
+            Register::H => self.h = val,
+            Register::L => self.l = val,
+        }
+    }
+
+    fn get_register_pair(&self, pair: RegisterPair) -> u16 {
+        match pair {
+            RegisterPair::BC => ((self.b as u16) << 8) | (self.c as u16),
+            RegisterPair::DE => ((self.d as u16) << 8) | (self.e as u16),
+            RegisterPair::HL => ((self.h as u16) << 8) | (self.l as u16),
+            RegisterPair::SP => self.sp,
+        }
+    }
+
+    fn set_register_pair(&mut self, pair: RegisterPair, val: u16) {
+        match pair {
+            RegisterPair::BC => {
+                self.b = (val >> 8) as u8;
+                self.c = val as u8;
+            }
+            RegisterPair::DE => {
+                self.d = (val >> 8) as u8;
+                self.e = val as u8;
+            }
+            RegisterPair::HL => {
+                self.h = (val >> 8) as u8;
+                self.l = val as u8;
+            }
+            RegisterPair::SP => {
+                self.sp = val;
+            }
+        }
+    }
+
+    fn get_flags(&self) -> Flags {
+        self.flags.clone()
+    }
+
+    fn get_pc(&self) -> u16 {
+        self.pc
+    }
+
+    fn is_halting(&self) -> bool {
+        self.is_halting
+    }
 }
 
 impl CPU {
@@ -232,21 +318,6 @@ impl CPU {
         }
     }
 
-    pub fn get_register(&self, bus: &mut Bus, register: Register) -> u8 {
-        match register {
-            Register::A => self.a,
-            Register::B => self.b,
-            Register::C => self.c,
-            Register::D => self.d,
-            Register::E => self.e,
-            Register::H => self.h,
-            Register::L => self.l,
-            Register::HL => bus
-                .read_byte(((self.h as u16) << 8) | (self.l as u16))
-                .unwrap(),
-        }
-    }
-
     pub fn get_flags_as_byte(&self) -> u8 {
         (self.flags.zero as u8) << 7
             | (self.flags.subtraction as u8) << 6
@@ -259,50 +330,6 @@ impl CPU {
         self.flags.subtraction = content & 0b0100_0000 != 0;
         self.flags.half_carry = content & 0b0010_0000 != 0;
         self.flags.carry = content & 0b0001_0000 != 0;
-    }
-
-    pub fn set_register(&mut self, bus: &mut Bus, register: Register, val: u8) {
-        match register {
-            Register::A => self.a = val,
-            Register::B => self.b = val,
-            Register::C => self.c = val,
-            Register::D => self.d = val,
-            Register::E => self.e = val,
-            Register::H => self.h = val,
-            Register::L => self.l = val,
-            Register::HL => bus
-                .write_byte(((self.h as u16) << 8) | (self.l as u16), val)
-                .unwrap(),
-        }
-    }
-
-    pub fn get_register_pair(&mut self, pair: RegisterPair) -> u16 {
-        match pair {
-            RegisterPair::BC => ((self.b as u16) << 8) | (self.c as u16),
-            RegisterPair::DE => ((self.d as u16) << 8) | (self.e as u16),
-            RegisterPair::HL => ((self.h as u16) << 8) | (self.l as u16),
-            RegisterPair::SP => self.sp,
-        }
-    }
-
-    pub fn set_register_pair(&mut self, pair: RegisterPair, val: u16) {
-        match pair {
-            RegisterPair::BC => {
-                self.b = (val >> 8) as u8;
-                self.c = val as u8;
-            }
-            RegisterPair::DE => {
-                self.d = (val >> 8) as u8;
-                self.e = val as u8;
-            }
-            RegisterPair::HL => {
-                self.h = (val >> 8) as u8;
-                self.l = val as u8;
-            }
-            RegisterPair::SP => {
-                self.sp = val;
-            }
-        }
     }
 
     fn handle_interrupts(&mut self, bus: &mut Bus) {

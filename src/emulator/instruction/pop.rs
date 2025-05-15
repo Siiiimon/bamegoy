@@ -1,6 +1,8 @@
 use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm, util};
+use crate::emulator::bus::BusView;
+use crate::emulator::cpu::CpuView;
 
 pub fn r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
@@ -16,7 +18,7 @@ pub fn r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     cpu.pc += 1;
 }
 
-pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn r16_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
 
     Some(Disasm{

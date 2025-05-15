@@ -5,6 +5,7 @@ use std::sync::mpsc::TryRecvError;
 use std::sync::TryLockError;
 use std::{env, fs};
 use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, settings::SettingsView};
+use crate::emulator::snapshot::Snapshot;
 
 pub mod emulator;
 
@@ -14,6 +15,7 @@ const COLORS: catppuccin::FlavorColors = catppuccin::PALETTE.macchiato.colors;
 
 pub struct UiState {
     emulator_state: State,
+    snapshot: Option<Snapshot>,
     last_pc: u16,
     bottom_panel_selected_tab: usize,
     settings_view: SettingsView,
@@ -97,7 +99,8 @@ impl eframe::App for BamegoyApp {
                     EmulatorMessage::Paused => {
                         self.ui_state.emulator_state = State::Paused;
                     },
-                    EmulatorMessage::Running => {
+                    EmulatorMessage::Running(snapshot) => {
+                        self.ui_state.snapshot = snapshot;
                         self.ui_state.emulator_state = State::Running;
                     },
                 }
@@ -111,6 +114,9 @@ impl eframe::App for BamegoyApp {
         }
 
         if self.ui_state.emulator_state == State::Running {
+            if let Some(snapshot) = &self.ui_state.snapshot {
+                ui::draw(ctx, &mut self.ui_state, self.emulator_handle.tx.clone(), &mut *snapshot.bus.clone(), &mut *snapshot.cpu.clone());
+            }
             ui::draw_running(ctx, &mut self.emulator_handle);
         } else {
             match (self.emulator_handle.cpu.try_lock(), self.emulator_handle.bus.try_lock()) {

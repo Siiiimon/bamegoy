@@ -1,4 +1,6 @@
 use crate::emulator::{bus, cpu, disassemble::{Disasm, Operand}, util};
+use crate::emulator::bus::BusView;
+use crate::emulator::cpu::CpuView;
 
 pub fn a8_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let value = cpu.get_register(bus, util::Register::A);
@@ -36,7 +38,7 @@ pub fn a_c(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     cpu.pc += 1;
 }
 
-pub fn a8_a_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a8_a_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let offset = bus.read_byte(addr + 1).unwrap();
 
     Some(Disasm {
@@ -49,7 +51,7 @@ pub fn a8_a_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn a_a8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_a8_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let offset = bus.read_byte(addr + 1).unwrap();
 
     Some(Disasm {
@@ -62,7 +64,7 @@ pub fn a_a8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn c_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn c_a_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],
@@ -73,7 +75,7 @@ pub fn c_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn a_c_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_c_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

@@ -1,44 +1,36 @@
 use error::BusError;
 use io::interrupts::InterruptKind;
 use std::sync::{Arc, Mutex};
+use dyn_clone::DynClone;
+use crate::emulator::bus::io::serial::Serial;
 
-mod error;
+pub mod error;
 pub mod io;
 
 pub type SharedBus = Arc<Mutex<Bus>>;
 
+pub trait BusView: DynClone {
+    fn read_byte(&self, addr: u16) -> Result<u8, BusError>;
+    fn write_byte(&mut self, addr: u16, content: u8) -> Result<(), BusError>;
+    fn read_word(&self, addr: u16) -> Result<u16, BusError>;
+    fn write_word(&mut self, addr: u16, content: u16) -> Result<(), BusError>;
+    fn get_serial(&self) -> &Serial;
+}
+dyn_clone::clone_trait_object!(BusView);
+
+#[derive(Clone)]
 pub struct Bus {
     pub rom: Box<[u8]>,
     vram: Box<[u8]>,
     ram: Box<[u8]>,
     oam: Box<[u8]>,
-    pub serial: io::serial::Serial,
+    pub serial: Serial,
     pub interrupts: io::interrupts::Interrupts,
     high_ram: Box<[u8]>,
 }
 
-impl Bus {
-    pub fn new() -> Self {
-        Self {
-            rom: vec![0; 0x8000].into_boxed_slice(),
-            vram: vec![0; 0x2000].into_boxed_slice(),
-            ram: vec![0; 0x4000].into_boxed_slice(),
-            oam: vec![0; 0xA0].into_boxed_slice(),
-            // io registers
-            serial: io::serial::Serial::default(),
-            interrupts: io::interrupts::Interrupts::default(),
-            high_ram: vec![0; 127].into_boxed_slice(),
-        }
-    }
-
-    pub fn from_cartridge_rom(cart: Vec<u8>) -> Result<Self, String> {
-        let mut bus = Self::new();
-        if cart.len() > bus.rom.len() { return Err("Cartridge rom too big!".to_string()); }
-        bus.rom[..cart.len()].copy_from_slice(&cart);
-        Ok(bus)
-    }
-
-    pub fn read_byte(&self, addr: u16) -> Result<u8, BusError> {
+impl BusView for Bus {
+    fn read_byte(&self, addr: u16) -> Result<u8, BusError> {
         match addr {
             0x0..0x8000 => {
                 Self::mem_read(&self.rom, addr)
@@ -66,7 +58,7 @@ impl Bus {
         }
     }
 
-    pub fn write_byte(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
+    fn write_byte(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
         match addr {
             0x0..0x8000 => {
                 Self::mem_write(&mut self.rom, addr, content)
@@ -97,14 +89,14 @@ impl Bus {
         }
     }
 
-    pub fn read_word(&self, addr: u16) -> Result<u16, BusError> {
+    fn read_word(&self, addr: u16) -> Result<u16, BusError> {
         let lo = self.read_byte(addr)?;
         let hi = self.read_byte(addr + 1)?;
 
         Ok(((hi as u16) << 8) | lo as u16)
     }
 
-    pub fn write_word(&mut self, addr: u16, content: u16) -> Result<(), BusError> {
+    fn write_word(&mut self, addr: u16, content: u16) -> Result<(), BusError> {
         let hi = (content >> 8) as u8;
         let lo = content as u8;
 
@@ -112,6 +104,32 @@ impl Bus {
         self.write_byte(addr + 1, lo)?;
 
         Ok(())
+    }
+
+    fn get_serial(&self) -> &Serial {
+        &self.serial
+    }
+}
+
+impl Bus {
+    pub fn new() -> Self {
+        Self {
+            rom: vec![0; 0x8000].into_boxed_slice(),
+            vram: vec![0; 0x2000].into_boxed_slice(),
+            ram: vec![0; 0x4000].into_boxed_slice(),
+            oam: vec![0; 0xA0].into_boxed_slice(),
+            // io registers
+            serial: io::serial::Serial::default(),
+            interrupts: io::interrupts::Interrupts::default(),
+            high_ram: vec![0; 127].into_boxed_slice(),
+        }
+    }
+
+    pub fn from_cartridge_rom(cart: Vec<u8>) -> Result<Self, String> {
+        let mut bus = Self::new();
+        if cart.len() > bus.rom.len() { return Err("Cartridge rom too big!".to_string()); }
+        bus.rom[..cart.len()].copy_from_slice(&cart);
+        Ok(bus)
     }
 
     fn mem_read(mem: &[u8], addr: u16) -> Result<u8, BusError> {

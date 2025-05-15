@@ -1,11 +1,12 @@
 use crate::emulator::bus;
 use crate::emulator::{cpu, disassemble::Disasm};
+use crate::emulator::bus::BusView;
 
 pub fn halt(cpu: &mut cpu::CPU) {
     cpu.is_halting = true;
 }
 
-pub(crate) fn halt_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub(crate) fn halt_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

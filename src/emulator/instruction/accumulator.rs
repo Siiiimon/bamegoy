@@ -1,5 +1,7 @@
 use crate::emulator::bus;
 use crate::emulator::{cpu, disassemble::Disasm, util};
+use crate::emulator::bus::BusView;
+use crate::emulator::cpu::CpuView;
 
 pub fn cpl(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let value = cpu.get_register(bus, util::Register::A);
@@ -41,7 +43,7 @@ pub fn daa(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     cpu.pc += 1;
 }
 
-pub fn cpl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn cpl_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],
@@ -52,7 +54,7 @@ pub fn cpl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-pub fn daa_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn daa_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

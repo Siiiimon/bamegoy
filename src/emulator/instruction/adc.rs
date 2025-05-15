@@ -1,6 +1,8 @@
 use crate::emulator::bus;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::{cpu, disassemble::Disasm, util};
+use crate::emulator::bus::BusView;
+use crate::emulator::cpu::CpuView;
 
 pub fn r8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let register = util::get_register_by_code(opcode & 0b111);
@@ -43,7 +45,7 @@ pub fn a_n8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     cpu.pc += 2;
 }
 
-pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn r8_disasm(_bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let register = util::get_register_by_code(opcode & 0b111);
 
     Some(Disasm {
@@ -57,7 +59,7 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
 }
 
 
-pub fn a_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
+pub fn a_n8_disasm(bus: Box<dyn BusView>, addr: u16, opcode: u8) -> Option<Disasm> {
     let imm = bus.read_byte(addr + 1).unwrap();
 
     Some(Disasm {

@@ -11,7 +11,6 @@ pub enum Register {
     E,
     H,
     L,
-    HL,
     A,
 }
 

@@ -1,6 +1,7 @@
 use std::fmt;
 
 use crate::emulator::{bus, instruction, util::get_register_pair_by_code};
+use crate::emulator::bus::BusView;
 
 pub struct Disasm {
     pub address: u16,
@@ -41,7 +42,7 @@ impl fmt::Display for Operand {
     }
 }
 
-pub fn disassemble(bus: &bus::Bus, addr: u16) -> Option<Disasm> {
+pub fn disassemble(bus: Box<dyn BusView>, addr: u16) -> Option<Disasm> {
     let opcode = bus.read_byte(addr).unwrap_or_else(|e| panic!("Tried to disassemble invalid address {:04X} - {}", addr, e));
     match opcode {
         0x00 => {
