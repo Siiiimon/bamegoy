@@ -75,25 +75,28 @@ impl Emulator {
         }
     }
 
+    fn handle_driver_message(&mut self, msg: DriverMessage) {
+        let msg = self.runtime.rx.try_recv();
+
+        match msg {
+            Ok(DriverMessage::Run(policy)) => {
+                self.runtime.state = State::Running;
+                self.runtime.policy = policy;
+                self.runtime.tx.send(EmulatorMessage::Running).unwrap();
+            },
+            Ok(DriverMessage::PauseRequest) => {
+                self.runtime.state = State::PauseRequested;
+            },
+            Err(TryRecvError::Empty) => {},
+            Err(e) => panic!("{}", e);
+        }
+    }
+
     fn live(&mut self) {
         self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
 
         loop {
-            let msg = self.runtime.rx.try_recv();
-            match msg {
-                Ok(DriverMessage::Run(policy)) => {
-                    self.runtime.state = State::Running;
-                    self.runtime.policy = policy;
-                    self.runtime.tx.send(EmulatorMessage::Running).unwrap();
-                }
-                Ok(DriverMessage::PauseRequest) => {
-                    self.runtime.state = State::PauseRequested;
-                }
-                Err(TryRecvError::Empty) => {},
-                Err(e) => {
-                    panic!("{}", e);
-                }
-            }
+            self.handle_driver_message();
 
             match self.runtime.state {
                 State::PauseRequested => {
@@ -119,7 +122,6 @@ impl Emulator {
                             panic!("CPU or Bus lock poisoned!");
                         }
                     }
-
                 }
             }
         }
