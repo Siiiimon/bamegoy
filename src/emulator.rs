@@ -75,7 +75,7 @@ impl Emulator {
         }
     }
 
-    fn handle_driver_message(&mut self, msg: DriverMessage) {
+    fn handle_driver_message(&mut self) {
         let msg = self.runtime.rx.try_recv();
 
         match msg {
@@ -92,38 +92,42 @@ impl Emulator {
         }
     }
 
+    fn handle_state(&mut self) {
+        match self.runtime.state {
+            State::PauseRequested => {
+                self.runtime.state = State::Paused;
+                self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
+            }
+            State::Paused => {}
+            State::Running => {
+                match (self.cpu.try_lock(), self.bus.try_lock()) {
+                    (Ok(mut cpu), Ok(mut bus)) => {
+                        cpu.step(&mut *bus);
+                        if let Some(p) = &mut self.runtime.policy {
+                            if p(&*cpu, &*bus) {
+                                self.runtime.policy = None;
+                                self.runtime.state = State::PauseRequested;
+                            }
+                        }
+                    }
+                    (Err(TryLockError::WouldBlock), _) |
+                    (_, Err(TryLockError::WouldBlock)) => {},
+                    (Err(TryLockError::Poisoned(_)), _) |
+                    (_, Err(TryLockError::Poisoned(_))) => {
+                        panic!("CPU or Bus lock poisoned!");
+                    }
+                }
+            }
+        }
+    }
+
     fn live(&mut self) {
         self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
 
         loop {
             self.handle_driver_message();
 
-            match self.runtime.state {
-                State::PauseRequested => {
-                    self.runtime.state = State::Paused;
-                    self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
-                }
-                State::Paused => {}
-                State::Running => {
-                    match (self.cpu.try_lock(), self.bus.try_lock()) {
-                        (Ok(mut cpu), Ok(mut bus)) => {
-                            cpu.step(&mut *bus);
-                            if let Some(p) = &mut self.runtime.policy {
-                                if p(&*cpu, &*bus) {
-                                    self.runtime.policy = None;
-                                    self.runtime.state = State::PauseRequested;
-                                }
-                            }
-                        }
-                        (Err(TryLockError::WouldBlock), _) |
-                        (_, Err(TryLockError::WouldBlock)) => {},
-                        (Err(TryLockError::Poisoned(_)), _) |
-                        (_, Err(TryLockError::Poisoned(_))) => {
-                            panic!("CPU or Bus lock poisoned!");
-                        }
-                    }
-                }
-            }
+            self.handle_state();            
         }
     }
 
