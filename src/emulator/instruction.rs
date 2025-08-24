@@ -1,3 +1,6 @@
+use super::cpu::CPU;
+use super::bus::Bus;
+
 pub mod inc;
 pub mod dec;
 pub mod ld;
@@ -22,3 +25,5 @@ pub mod halt;
 pub mod rotate;
 pub mod carry;
 pub mod accumulator;
+
+pub type Instruction = fn(&mut CPU, &mut Bus) -> (u8, u8);

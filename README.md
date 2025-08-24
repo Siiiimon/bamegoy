@@ -1,4 +1,6 @@
 ### Ideas
+- watch elliot videos before touching the ui again
+
 - [ ] toggle octal/hex view in memory view / serial view
 - [ ] split pane for ascii in memory view / serial view
 - [ ] editable bytes in RAM (memory view)

@@ -1,6 +1,7 @@
 use crate::disassemble;
 use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
+use crate::emulator::instruction::Instruction;
 use crate::emulator::util::get_register_pair_by_code;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
@@ -61,28 +62,7 @@ impl CPU {
         *self = CPU::new(self.should_trace_log);
     }
 
-    pub fn step(&mut self, bus: &mut Bus) {
-        if self.ie_enable_delay {
-            self.ie_enable_delay = false;
-            bus.interrupts.ime = true;
-        }
-
-        if self.is_halting {
-            return;
-        }
-
-        self.handle_interrupts(bus);
-
-        // fetch
-        let opcode = match bus.read_byte(self.pc) {
-            Ok(byte) => byte,
-            Err(e) => {
-                eprintln!("{}", e);
-                return;
-            }
-        };
-
-        // decode
+    fn decode(&mut self, opcode: u8) -> Instruction {
         match opcode {
             0x00 => {
                 self.pc += 1;
@@ -211,6 +191,31 @@ impl CPU {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
         }
+    }
+
+    pub fn step(&mut self, bus: &mut Bus) {
+        if self.ie_enable_delay {
+            self.ie_enable_delay = false;
+            bus.interrupts.ime = true;
+        }
+
+        if self.is_halting {
+            return;
+        }
+
+        self.handle_interrupts(bus);
+
+        // fetch
+        let opcode = match bus.read_byte(self.pc) {
+            Ok(byte) => byte,
+            Err(e) => {
+                eprintln!("{}", e);
+                return;
+            }
+        };
+
+        let instruction = self.decode(opcode);
+        
 
         if self.should_trace_log {
             if let Some(disasm) = disassemble(&*bus, self.pc) {
