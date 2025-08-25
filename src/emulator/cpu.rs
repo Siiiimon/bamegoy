@@ -64,18 +64,10 @@ impl CPU {
 
     fn decode(&mut self, opcode: u8) -> Instruction {
         match opcode {
-            0x00 => {
-                self.pc += 1;
-            }
-            0o363 => {
-                instruction::di::di(self, bus);
-            }
-            0o373 => {
-                instruction::ei::ei(self);
-            }
-            0o166 | 0o20 => {
-                instruction::halt::halt(self);
-            }
+            0x00 => instruction::control::nop::nop,
+            0o363 => instruction::control::di::di,
+            0o373 => instruction::control::ei::ei,
+            0o166 | 0o20 => instruction::control::halt::halt,
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
                 if (opcode >> 3) & 0 == 1 {

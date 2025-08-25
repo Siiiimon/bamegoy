@@ -1,6 +1,8 @@
 use super::cpu::CPU;
 use super::bus::Bus;
 
+pub mod control;
+
 pub mod inc;
 pub mod dec;
 pub mod ld;
@@ -19,9 +21,6 @@ pub mod rst;
 pub mod ret;
 pub mod push;
 pub mod pop;
-pub mod di;
-pub mod ei;
-pub mod halt;
 pub mod rotate;
 pub mod carry;
 pub mod accumulator;
