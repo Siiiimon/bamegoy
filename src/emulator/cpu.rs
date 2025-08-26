@@ -64,10 +64,23 @@ impl CPU {
 
     fn decode(&mut self, opcode: u8) -> Instruction {
         match opcode {
-            0x00 => instruction::control::nop::nop,
-            0o363 => instruction::control::di::di,
-            0o373 => instruction::control::ei::ei,
-            0o166 | 0o20 => instruction::control::halt::halt,
+            0x00 => instruction::control::nop,
+            0o363 => instruction::control::di,
+            0o373 => instruction::control::ei,
+            0o166 | 0o20 => instruction::control::halt,
+
+            0o30 => instruction::jump::jr_e8,
+            0o40 | 0o50 | 0o60 | 0o70 => instruction::jump::jr_cc_e8,
+            0o311 => instruction::jump::ret,
+            0o331 => instruction::jump::reti,
+            0o300 | 0o310 | 0o320 | 0o330 => instruction::jump::ret,
+            0o351 => instruction::jump::jp_hl,
+            0o303 => instruction::jump::jp_a16,
+            0o302 | 0o312 | 0o322 | 0o332 => instruction::jump::jp_cc_a16,
+            0o315 => instruction::jump::call,
+            0o304 | 0o314 | 0o324 | 0o334 => instruction::jump::call_cc,
+            0o307 | 0o317 | 0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => instruction::jump::rst,
+
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
                 if (opcode >> 3) & 0 == 1 {
@@ -159,22 +172,6 @@ impl CPU {
             0o67 => instruction::carry::scf(self),
             0o77 => instruction::carry::ccf(self),
             0o376 => instruction::cp::a_n8(self, bus),
-            0o30 | 0o40 | 0o50 | 0o60 | 0o70 => {
-                instruction::jump::e8(self, bus, opcode);
-            }
-            0o351 => instruction::jump::hl(self),
-            0o302 | 0o303 | 0o312 | 0o322 | 0o332 => {
-                instruction::jump::a16(self, bus, opcode);
-            }
-            0o300 | 0o310 | 0o311 | 0o320 | 0o330 | 0o331 => {
-                instruction::ret::ret(self, bus, opcode);
-            }
-            0o304 | 0o314 | 0o315 | 0o324 | 0o334 => {
-                instruction::call::call(self, bus, opcode);
-            }
-            0o307 | 0o317 | 0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => {
-                instruction::rst::rst(self, bus, opcode);
-            }
             0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
             | 0o375 => {
                 return;
@@ -207,7 +204,6 @@ impl CPU {
         };
 
         let instruction = self.decode(opcode);
-        
 
         if self.should_trace_log {
             if let Some(disasm) = disassemble(&*bus, self.pc) {

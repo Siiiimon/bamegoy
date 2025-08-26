@@ -1,32 +1,23 @@
-use crate::emulator::bus;
-use crate::emulator::disassemble::Operand;
-use crate::emulator::{cpu, disassemble::Disasm, util};
+use crate::emulator::bus::Bus;
+use crate::emulator::cpu::CPU;
+use crate::emulator::instruction::get_opcode;
+use crate::emulator::util;
 
-pub fn a16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
-    let target = bus.read_word(cpu.pc + 1).unwrap();
-
-    let should_jump = match opcode >> 4 {
-        2 => !cpu.flags.zero,
-        3 => cpu.flags.zero,
-        4 => !cpu.flags.carry,
-        5 => cpu.flags.carry,
-        _ => false,
-    };
-
-    if should_jump || opcode == 0o303 {
-        cpu.pc = target;
-    } else {
-        cpu.pc += 3;
-    }
-}
-
-pub fn e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
+pub fn jr_e8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8;
     let target = if offset < 0 {
         cpu.pc.wrapping_add(2).wrapping_sub((-offset) as u16)
     } else {
         cpu.pc.wrapping_add(2).wrapping_add(offset as u16)
     };
+
+    cpu.pc = target;
+
+    (0, 12)
+}
+
+pub fn jr_cc_e8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let opcode = get_opcode(cpu, bus);
 
     let should_jump = match opcode >> 4 {
         1 => true,
@@ -38,81 +29,105 @@ pub fn e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     };
 
     if should_jump {
-        cpu.pc = target;
+        jr_e8(cpu, bus)
     } else {
-        cpu.pc += 2;
+        (2, 8)
     }
 }
 
-pub fn hl(cpu: &mut cpu::CPU) {
+pub fn ret(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let addr = match bus.pop_word(&mut cpu.sp) {
+        Ok(addr) => addr,
+        Err(e) => panic!("Failed to pop return address: {}", e),
+    };
+
+    cpu.pc = addr;
+
+    (0, 16)
+}
+
+pub fn ret_cc(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let should_jump = match opcode >> 4 {
+        2 => !cpu.flags.zero,
+        3 => cpu.flags.zero,
+        4 => !cpu.flags.carry,
+        5 => cpu.flags.carry,
+        _ => false,
+    };
+
+    if should_jump {
+        ret(cpu, bus)
+    } else {
+        return (1, 20)
+    }
+}
+
+pub fn reti(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    bus.interrupts.ime = true;
+    ret(cpu, bus)
+}
+
+pub fn jp_hl(cpu: &mut CPU, _bus: &mut Bus) -> (u8, u8) {
     let addr = cpu.get_register_pair(util::RegisterPair::HL);
     cpu.pc = addr;
+    (0, 4)
 }
 
-pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let target = bus.read_word(addr + 1).unwrap();
+pub fn jp_a16(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let target = bus.read_word(cpu.pc + 1).unwrap();
+    cpu.pc = target;
+    (0, 16)
+}
 
-    let instr = match opcode {
-        0xC3 => vec!["JP".to_string(), "".to_string()],
-        0xC2 => vec!["JP".to_string(), "NZ".to_string()],
-        0xCA => vec!["JP".to_string(), "Z".to_string()],
-        0xD2 => vec!["JP".to_string(), "NC".to_string()],
-        0xDA => vec!["JP".to_string(), "C".to_string()],
-        _ => return None,
+pub fn jp_cc_a16(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let should_jump = match opcode >> 4 {
+        2 => !cpu.flags.zero,
+        3 => cpu.flags.zero,
+        4 => !cpu.flags.carry,
+        5 => cpu.flags.carry,
+        _ => false,
     };
 
-    Some(Disasm {
-        address: addr,
-        bytes: vec![opcode, target as u8, (target >> 8) as u8],
-        length: 3,
-        mnemonic: instr.join(" ").to_string() + " " + &format!("{:04X}", target),
-        verb: instr[0].clone(),
-        operands: if instr[1].is_empty() {
-            vec![Operand::Address(target)]
-        } else {
-            vec![Operand::Conditional(instr[1].clone()), Operand::Address(target)]
-        }
-    })
-}
-
-pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let offset = bus.read_byte(addr + 1).unwrap() as i8;
-    let target = if offset < 0 {
-        addr.wrapping_add(2).wrapping_sub((-offset) as u16)
+    if should_jump {
+        jp_a16(cpu, bus)
     } else {
-        addr.wrapping_add(2).wrapping_add(offset as u16)
-    };
-
-    let instr = match opcode {
-        0x18 => vec!["JP".to_string(), "".to_string()],
-        0x20 => vec!["JP".to_string(), "NZ".to_string()],
-        0x28 => vec!["JP".to_string(), "Z".to_string()],
-        0x30 => vec!["JP".to_string(), "NC".to_string()],
-        0x38 => vec!["JP".to_string(), "C".to_string()],
-        _ => return None,
-    };
-
-    Some(Disasm {
-        address: addr,
-        bytes: vec![opcode, offset as u8],
-        length: 2,
-        mnemonic: instr.join(" ").to_string() + " " + &format!("{:04X}", target),
-        verb: instr[0].clone(),
-        operands: if instr[1].is_empty() {
-            vec![Operand::Offset(offset)]
-        } else {
-            vec![Operand::Conditional(instr[1].clone()), Operand::Offset(offset)]
-        }
-    })
+        (3, 16)
+    }
 }
 
-pub fn hl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    Some(Disasm {
-        address: addr,
-        bytes: vec![opcode],
-        length: 1,
-        mnemonic: "JP HL".into(),
-        verb: "JP".into(),
-        operands: vec![Operand::Register16("HL".to_string())],
-    })
+pub fn call(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let lo = bus.read_byte(cpu.pc + 1).unwrap();
+    let hi = bus.read_byte(cpu.pc + 2).unwrap();
+
+    let _ = bus.push_word(&mut cpu.sp, cpu.pc + 3);
+    cpu.pc = ((hi as u16) << 8) | lo as u16;
+    (0, 24)
+}
+
+pub fn call_cc(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let should_jump = match opcode >> 4 {
+        2 => !cpu.flags.zero,
+        3 => cpu.flags.zero,
+        4 => !cpu.flags.carry,
+        5 => cpu.flags.carry,
+        _ => false,
+    };
+
+    if should_jump {
+        call(cpu, bus)
+    } else {
+        (3, 12)
+    }
+}
+
+pub fn rst(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let addr = ((opcode >> 3) & 0b111) * 8;
+
+    let _ = bus.push_word(&mut cpu.sp, cpu.pc + 1);
+    cpu.pc = addr as u16;
+    (0, 16)
 }
