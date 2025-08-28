@@ -1,4 +1,4 @@
-use crate::emulator::cpu::CPU;
+use bamegoy::emulator::cpu::CPU;
 
 pub struct SettingsView {
     pub show_settings_view: bool,

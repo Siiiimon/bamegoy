@@ -57,7 +57,7 @@ pub fn ld_r8_n8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
 
     if register == Register::HL {
         let addr = cpu.get_register_pair(RegisterPair::HL);
-        bus.write_byte(addr, value);
+        let _ = bus.write_byte(addr, value);
         return (2, 12)
     }
 
@@ -83,7 +83,7 @@ pub fn ld_r8_r8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
 
     if dst == Register::HL {
         let addr = cpu.get_register_pair(RegisterPair::HL);
-        bus.write_byte(addr, value);
+        let _ = bus.write_byte(addr, value);
         return (1, 8)
     }
 

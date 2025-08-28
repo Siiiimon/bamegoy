@@ -1,12 +1,9 @@
-use crate::emulator::{Emulator, EmulatorMessage, Handle, State};
+use bamegoy::emulator::{Emulator, EmulatorMessage, Handle, State};
 use eframe::egui;
-use emulator::disassemble::disassemble;
+// use emulator::disassemble::disassemble;
 use std::sync::mpsc::TryRecvError;
-use std::sync::TryLockError;
 use std::{env, fs};
 use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, settings::SettingsView};
-
-pub mod emulator;
 
 mod ui;
 
@@ -100,6 +97,7 @@ impl eframe::App for BamegoyApp {
                     EmulatorMessage::Running => {
                         self.ui_state.emulator_state = State::Running;
                     },
+                    _ => panic!("uncovered message")
                 }
             },
             Err(e) => {
@@ -110,20 +108,20 @@ impl eframe::App for BamegoyApp {
             },
         }
 
-        if self.ui_state.emulator_state == State::Running {
-            ui::draw_running(ctx, &mut self.emulator_handle);
-        } else {
-            match (self.emulator_handle.cpu.try_lock(), self.emulator_handle.bus.try_lock()) {
-                (Ok(mut cpu), Ok(mut bus)) => {
-                    ui::draw(ctx, &mut self.ui_state, self.emulator_handle.tx.clone(), &mut *bus, &mut *cpu);
-                }
-                (Err(TryLockError::WouldBlock), _) => ui::draw_error(ctx, "acquiring cpu handle...".to_string()),
-                (_, Err(TryLockError::WouldBlock)) => ui::draw_error(ctx, "acquiring bus handle...".to_string()),
-                (Err(TryLockError::Poisoned(_)), _) |
-                (_, Err(TryLockError::Poisoned(_))) => {
-                    ui::draw_error(ctx, "CPU or Bus lock poisoned!".to_string());
-                }
-            }
-        }
+        // if self.ui_state.emulator_state == State::Running {
+        //     ui::draw_running(ctx, &mut self.emulator_handle);
+        // } else {
+        //     match (self.emulator_handle.cpu.try_lock(), self.emulator_handle.bus.try_lock()) {
+        //         (Ok(mut cpu), Ok(mut bus)) => {
+        //             ui::draw(ctx, &mut self.ui_state, self.emulator_handle.tx.clone(), &mut *bus, &mut *cpu);
+        //         }
+        //         (Err(TryLockError::WouldBlock), _) => ui::draw_error(ctx, "acquiring cpu handle...".to_string()),
+        //         (_, Err(TryLockError::WouldBlock)) => ui::draw_error(ctx, "acquiring bus handle...".to_string()),
+        //         (Err(TryLockError::Poisoned(_)), _) |
+        //         (_, Err(TryLockError::Poisoned(_))) => {
+        //             ui::draw_error(ctx, "CPU or Bus lock poisoned!".to_string());
+        //         }
+        //     }
+        // }
     }
 }

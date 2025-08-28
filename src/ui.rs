@@ -1,11 +1,11 @@
 use egui::{Context, RichText};
 use std::sync::mpsc::Sender;
 
-use crate::emulator::bus::Bus;
-use crate::emulator::cpu::CPU;
-use crate::emulator::{DriverMessage, Handle};
-use crate::emulator::bus::io::serial;
-use crate::emulator::disassemble::disassemble;
+use bamegoy::emulator::bus::Bus;
+use bamegoy::emulator::cpu::CPU;
+use bamegoy::emulator::{DriverMessage, Handle};
+use bamegoy::emulator::bus::io::serial;
+// use crate::emulator::disassemble::disassemble;
 use crate::UiState;
 
 pub mod settings;
@@ -85,18 +85,18 @@ pub fn draw_info_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {
 
     ui.separator();
     ui.label("current instruction:");
-    if let Some(disasm) = disassemble(&bus, cpu.pc) {
-        ui.monospace(format!("mnemonic: {}", disasm.mnemonic));
-        ui.monospace(format!(
-            "bytes: {}",
-            disasm
-                .bytes
-                .iter()
-                .map(|b| format!("{:02X}", b))
-                .collect::<Vec<_>>()
-                .join(" ")
-        ));
-    }
+    // if let Some(disasm) = disassemble(&bus, cpu.pc) {
+    //     ui.monospace(format!("mnemonic: {}", disasm.mnemonic));
+    //     ui.monospace(format!(
+    //         "bytes: {}",
+    //         disasm
+    //             .bytes
+    //             .iter()
+    //             .map(|b| format!("{:02X}", b))
+    //             .collect::<Vec<_>>()
+    //             .join(" ")
+    //     ));
+    // }
 }
 
 pub fn draw_memory_panel(ui: &mut egui::Ui, cpu: &CPU, bus: &mut Bus) {

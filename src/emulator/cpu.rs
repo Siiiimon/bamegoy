@@ -1,10 +1,26 @@
-use crate::disassemble;
+// use crate::disassemble;
 use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
 use crate::emulator::instruction::Instruction;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Registers {
+    pub a: u8,
+    pub b: u8,
+    pub c: u8,
+    pub d: u8,
+    pub e: u8,
+    pub h: u8,
+    pub l: u8,
+    pub flags: Flags,
+
+    pub sp: u16,
+    pub pc: u16,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Flags {
     pub zero: bool,
     pub subtraction: bool,
@@ -198,24 +214,24 @@ impl CPU {
 
         self.pc += length;
 
-        if self.should_trace_log {
-            if let Some(disasm) = disassemble(&*bus, self.pc) {
-                println!(
-                    "{:04X}: {:<12} | A:{:02X} F:{}{}{}{} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X}",
-                    disasm.address,
-                    disasm.mnemonic,
-                    self.a,
-                    if self.flags.zero { "Z" } else { "-" },
-                    if self.flags.subtraction { "N" } else { "-" },
-                    if self.flags.half_carry { "H" } else { "-" },
-                    if self.flags.carry { "C" } else { "-" },
-                    self.b, self.c, self.d, self.e, self.h, self.l,
-                    self.sp,
-                );
-            } else {
-                println!("{:04X}: <undisassembled>", self.pc);
-            }
-        }
+        // if self.should_trace_log {
+        //     if let Some(disasm) = disassemble(&*bus, self.pc) {
+        //         println!(
+        //             "{:04X}: {:<12} | A:{:02X} F:{}{}{}{} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X}",
+        //             disasm.address,
+        //             disasm.mnemonic,
+        //             self.a,
+        //             if self.flags.zero { "Z" } else { "-" },
+        //             if self.flags.subtraction { "N" } else { "-" },
+        //             if self.flags.half_carry { "H" } else { "-" },
+        //             if self.flags.carry { "C" } else { "-" },
+        //             self.b, self.c, self.d, self.e, self.h, self.l,
+        //             self.sp,
+        //         );
+        //     } else {
+        //         println!("{:04X}: <undisassembled>", self.pc);
+        //     }
+        // }
     }
 
     pub fn get_register(&self, bus: &mut Bus, register: Register) -> u8 {
@@ -230,6 +246,21 @@ impl CPU {
             Register::HL => bus
                 .read_byte(((self.h as u16) << 8) | (self.l as u16))
                 .unwrap(),
+        }
+    }
+
+    pub fn get_registers(&self) -> Registers {
+        Registers {
+            a: self.a,
+            b: self.b,
+            c: self.c,
+            d: self.d,
+            e: self.e,
+            h: self.h,
+            l: self.l,
+            flags: self.flags,
+            sp: self.sp,
+            pc: self.pc,
         }
     }
 

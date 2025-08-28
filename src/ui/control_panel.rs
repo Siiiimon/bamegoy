@@ -1,5 +1,5 @@
-use crate::emulator::cpu::CPU;
-use crate::emulator::{policy, DriverMessage, State};
+use bamegoy::emulator::cpu::CPU;
+use bamegoy::emulator::{policy, DriverMessage, State};
 use crate::UiState;
 use std::sync::mpsc::Sender;
 

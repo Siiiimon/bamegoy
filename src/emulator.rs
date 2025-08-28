@@ -1,9 +1,8 @@
 use crate::emulator::bus::Bus;
-use crate::emulator::cpu::CPU;
+use crate::emulator::cpu::{Registers, CPU};
 use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::{Arc, Mutex, TryLockError};
-use std::thread;
+use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 use crate::emulator::policy::Policy;
 
@@ -16,43 +15,48 @@ pub mod policy;
 
 pub struct Emulator {
     runtime: Runtime,
-    bus: bus::SharedBus,
-    cpu: Arc<Mutex<CPU>>,
+    bus: Bus,
+    cpu: CPU,
 }
 
 pub struct Runtime {
     state: State,
     last_step_time: Instant,
     step_interval: Duration,
+    should_exit: bool,
 
     tx: Sender<EmulatorMessage>,
     rx: Receiver<DriverMessage>,
     policy: Option<Policy>,
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum State {
     PauseRequested,
     Paused,
     Running,
+    Dying,
 }
 
 pub struct Handle {
+    pub thread: JoinHandle<()>,
     pub tx: Sender<DriverMessage>,
     pub rx: Receiver<EmulatorMessage>,
-    pub cpu: Arc<Mutex<CPU>>,
-    pub bus: Arc<Mutex<Bus>>,
 }
 
 pub enum DriverMessage {
     Run(Option<Policy>),
     PauseRequest,
+    Kill,
+
+    GetRegisters,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum EmulatorMessage {
     Paused,
     Running,
+    Registers(Registers),
 }
 
 impl Emulator {
@@ -65,13 +69,14 @@ impl Emulator {
                 state: State::Paused,
                 last_step_time: Instant::now(),
                 step_interval: Duration::from_millis(100),
+                should_exit: false,
                 tx,
                 rx,
                 policy: None,
             },
 
-            bus: Arc::new(Mutex::new(bus)),
-            cpu: Arc::new(Mutex::new(cpu)),
+            bus,
+            cpu,
         }
     }
 
@@ -87,8 +92,17 @@ impl Emulator {
             Ok(DriverMessage::PauseRequest) => {
                 self.runtime.state = State::PauseRequested;
             },
+            Ok(DriverMessage::Kill) => {
+                self.runtime.state = State::Dying;
+            }
             Err(TryRecvError::Empty) => {},
-            Err(e) => panic!("{}", e);
+            Err(e) => panic!("{}", e),
+
+            Ok(DriverMessage::GetRegisters) => {
+                let _ = self.runtime.tx.send(
+                    EmulatorMessage::Registers(self.cpu.get_registers())
+                );
+            },
         }
     }
 
@@ -100,23 +114,17 @@ impl Emulator {
             }
             State::Paused => {}
             State::Running => {
-                match (self.cpu.try_lock(), self.bus.try_lock()) {
-                    (Ok(mut cpu), Ok(mut bus)) => {
-                        cpu.step(&mut *bus);
-                        if let Some(p) = &mut self.runtime.policy {
-                            if p(&*cpu, &*bus) {
-                                self.runtime.policy = None;
-                                self.runtime.state = State::PauseRequested;
-                            }
-                        }
-                    }
-                    (Err(TryLockError::WouldBlock), _) |
-                    (_, Err(TryLockError::WouldBlock)) => {},
-                    (Err(TryLockError::Poisoned(_)), _) |
-                    (_, Err(TryLockError::Poisoned(_))) => {
-                        panic!("CPU or Bus lock poisoned!");
+                self.cpu.step(&mut self.bus);
+
+                if let Some(policy) = &mut self.runtime.policy {
+                    if policy(&mut self.cpu, &mut self.bus) {
+                        self.runtime.policy = None;
+                        self.runtime.state = State::PauseRequested;
                     }
                 }
+            },
+            State::Dying => {
+                self.runtime.should_exit = true;
             }
         }
     }
@@ -124,7 +132,7 @@ impl Emulator {
     fn live(&mut self) {
         self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
 
-        loop {
+        while !self.runtime.should_exit {
             self.handle_driver_message();
 
             self.handle_state();            
@@ -136,19 +144,16 @@ impl Emulator {
         let (emulator_tx, emulator_rx) = channel();
 
         let emulator = Self::new(cartridge, should_trace, emulator_tx, driver_rx);
-        let cpu_arc = emulator.cpu.clone();
-        let bus_arc = emulator.bus.clone();
 
-        thread::spawn(move || {
+        let thread = thread::spawn(move || {
             let mut emulator = emulator;
             emulator.live();
         });
 
         Handle {
+            thread,
             tx: driver_tx,
             rx: emulator_rx,
-            cpu: cpu_arc,
-            bus: bus_arc,
         }
     }
 }
