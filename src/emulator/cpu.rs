@@ -81,6 +81,9 @@ impl CPU {
             0o304 | 0o314 | 0o324 | 0o334 => instruction::jump::call_cc,
             0o307 | 0o317 | 0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => instruction::jump::rst,
 
+            0o02 | 0o22 | 0o42 | 0o62 => instruction::load::r16addr_a,
+            0o12 | 0o32 | 0o52 | 0o72 => instruction::load::a_r16addr,
+
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
                 if (opcode >> 3) & 0 == 1 {
@@ -104,16 +107,7 @@ impl CPU {
             0o01 | 0o21 | 0o41 | 0o61 => {
                 instruction::ld::r16_n16(self, bus, opcode);
             }
-            0o02 | 0o22 => {
-                instruction::ld::addr_of_r16_a(self, bus, opcode);
-            }
-            0o12 | 0o32 => {
-                instruction::ld::a_addr_of_r16(self, bus, opcode);
-            }
-            0o42 => instruction::ld::addr_of_hl_a(self, bus, true),
-            0o52 => instruction::ld::a_addr_of_hl(self, bus, true),
-            0o62 => instruction::ld::addr_of_hl_a(self, bus, false),
-            0o72 => instruction::ld::a_addr_of_hl(self, bus, false),
+            
             0o352 => instruction::ld::a16_a(self, bus),
             0o372 => instruction::ld::a_a16(self, bus),
             0o10 => instruction::ld::a16_sp(self, bus),

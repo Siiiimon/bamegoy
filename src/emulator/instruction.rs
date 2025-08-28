@@ -3,6 +3,7 @@ use super::bus::Bus;
 
 pub mod control;
 pub mod jump;
+pub mod load;
 
 pub mod inc;
 pub mod dec;
@@ -16,9 +17,6 @@ pub mod and;
 pub mod xor;
 pub mod or;
 pub mod cp;
-pub mod call;
-pub mod rst;
-pub mod ret;
 pub mod push;
 pub mod pop;
 pub mod rotate;

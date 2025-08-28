@@ -45,64 +45,6 @@ pub fn r8_r8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     cpu.pc += 1;
 }
 
-pub fn addr_of_r16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
-    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
-    let addr = cpu.get_register_pair(pair);
-    let value = cpu.get_register(bus, util::Register::A);
-
-    match bus.write_byte(addr, value) {
-        Ok(()) => (),
-        Err(e) => eprintln!("{}", e)
-    }
-
-    cpu.pc +=1;
-}
-
-pub fn a_addr_of_r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
-    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
-    let addr = cpu.get_register_pair(pair);
-
-    let value = match bus.read_byte(addr) {
-        Ok(byte) => byte,
-        Err(e) => {
-            eprintln!("{}", e);
-            return;
-        }
-    };
-
-    cpu.set_register(bus, util::Register::A, value);
-
-    cpu.pc +=1;
-}
-
-pub fn addr_of_hl_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
-    let value = cpu.get_register(bus, util::Register::A);
-    cpu.set_register(bus, util::Register::HL, value);
-
-    let hl = cpu.get_register_pair(util::RegisterPair::HL);
-    if should_increase {
-        cpu.set_register_pair(util::RegisterPair::HL, hl.wrapping_add(1));
-    } else {
-        cpu.set_register_pair(util::RegisterPair::HL, hl.wrapping_sub(1));
-    }
-
-    cpu.pc += 1;
-}
-
-pub fn a_addr_of_hl(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
-    let value = cpu.get_register(bus, util::Register::HL);
-    cpu.set_register(bus, util::Register::A, value);
-
-    let hl = cpu.get_register_pair(util::RegisterPair::HL);
-    if should_increase {
-        cpu.set_register_pair(util::RegisterPair::HL, hl.wrapping_add(1));
-    } else {
-        cpu.set_register_pair(util::RegisterPair::HL, hl.wrapping_sub(1));
-    }
-
-    cpu.pc += 1;
-}
-
 pub fn a16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let addr = bus.read_word(cpu.pc + 1).unwrap();
     let content = cpu.get_register(bus, util::Register::A);
