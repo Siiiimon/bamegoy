@@ -390,3 +390,57 @@ pub fn cp_a_n8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
 
     (2, 8)
 }
+
+pub fn add_hl_r16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+    let hl = cpu.get_register_pair(util::RegisterPair::HL);
+    let xy = cpu.get_register_pair(pair);
+
+    let (value, carry) = hl.overflowing_add(xy);
+    cpu.set_register_pair(util::RegisterPair::HL, value);
+
+    cpu.flags.subtraction = false;
+    cpu.flags.carry = carry;
+    cpu.flags.half_carry = ((hl & 0x0FFF) + (value & 0x0FFF)) > 0x0FFF;
+
+    (1, 8)
+}
+
+pub fn inc_r16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let pair = util::get_register_pair_by_code(opcode >> 4);
+    let current = cpu.get_register_pair(pair);
+    let new = current.wrapping_add(1);
+
+    cpu.set_register_pair(pair, new);
+
+    (1, 8)
+}
+
+pub fn dec_r16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let pair = util::get_register_pair_by_code(opcode >> 4);
+    let current = cpu.get_register_pair(pair);
+    let new = current.wrapping_sub(1);
+
+    cpu.set_register_pair(pair, new);
+
+    (1, 8)
+}
+
+pub fn sp_e8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let offset = bus.read_byte(cpu.pc + 1).unwrap() as i16;
+    let sp = cpu.sp as i16;
+    cpu.sp = sp.wrapping_add(offset) as u16;
+
+    let lo_sp = cpu.sp as u8;
+    let lo_offset = offset as u8;
+
+    cpu.flags.zero = false;
+    cpu.flags.subtraction = false;
+    cpu.flags.half_carry = ((lo_sp & 0x0F) + (lo_offset & 0x0F)) > 0x0F;
+    cpu.flags.carry = ((lo_sp as u16) + (lo_offset as u16)) > 0xFF;
+
+    (2, 16)
+}

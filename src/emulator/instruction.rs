@@ -5,24 +5,7 @@ pub mod control;
 pub mod jump;
 pub mod load;
 pub mod logic;
-
-pub mod inc;
-pub mod dec;
-pub mod ld;
-pub mod ldh;
-pub mod add;
-pub mod adc;
-pub mod sub;
-pub mod sbc;
-pub mod and;
-pub mod xor;
-pub mod or;
-pub mod cp;
-pub mod push;
-pub mod pop;
-pub mod rotate;
-pub mod carry;
-pub mod accumulator;
+pub mod bit;
 
 pub type Instruction = fn(&mut CPU, &mut Bus) -> (u16, u8);
 

@@ -137,35 +137,16 @@ impl CPU {
             0o366 => instruction::logic::or_a_n8,
             0o376 => instruction::logic::cp_a_n8,
 
+            0o11 | 0o31 | 0o51 | 0o71 => instruction::logic::add_hl_r16,
+            0o03 | 0o23 | 0o43 | 0o63  => instruction::logic::inc_r16,
+            0o13 | 0o33 | 0o53 | 0o73 => instruction::logic::dec_r16,
+            0o350 => instruction::logic::sp_e8,
+            
+            0o07 => instruction::bit::rlca,
+            0o17 => instruction::bit::rrca,
+            0o27 => instruction::bit::rla,
+            0o37 => instruction::bit::rra,
 
-
-            // 0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
-            //     let pair = get_register_pair_by_code(opcode >> 4);
-            //     if (opcode >> 3) & 0 == 1 {
-            //         instruction::inc::r16(self, pair);
-            //     } else {
-            //         instruction::dec::r16(self, pair);
-            //     }
-            // }
-            
-            
-            
-            
-            
-            
-            // 0o11 | 0o31 | 0o51 | 0o71 => {
-            //     instruction::add::r16(self, opcode);
-            // }
-            // 0o350 => instruction::add::sp_e8(self, bus),
-            
-            // 0o07 => instruction::rotate::rlca(self, bus),
-            // 0o17 => instruction::rotate::rrca(self, bus),
-            // 0o27 => instruction::rotate::rla(self, bus),
-            // 0o37 => instruction::rotate::rra(self, bus),
-            // 0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
-            // | 0o375 => {
-            //     return;
-            // }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
