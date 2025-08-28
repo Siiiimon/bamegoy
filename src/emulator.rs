@@ -83,22 +83,27 @@ impl Emulator {
     fn handle_driver_message(&mut self) {
         let msg = self.runtime.rx.try_recv();
 
-        match msg {
-            Ok(DriverMessage::Run(policy)) => {
+        if let Err(e) = msg {
+            if e == TryRecvError::Empty {
+                return;
+            } else {
+                panic!("{}", e);
+            }
+        }
+
+        match msg.unwrap() {
+            DriverMessage::Run(policy) => {
                 self.runtime.state = State::Running;
                 self.runtime.policy = policy;
                 self.runtime.tx.send(EmulatorMessage::Running).unwrap();
             },
-            Ok(DriverMessage::PauseRequest) => {
+            DriverMessage::PauseRequest => {
                 self.runtime.state = State::PauseRequested;
             },
-            Ok(DriverMessage::Kill) => {
+            DriverMessage::Kill => {
                 self.runtime.state = State::Dying;
-            }
-            Err(TryRecvError::Empty) => {},
-            Err(e) => panic!("{}", e),
-
-            Ok(DriverMessage::GetRegisters) => {
+            },
+            DriverMessage::GetRegisters => {
                 let _ = self.runtime.tx.send(
                     EmulatorMessage::Registers(self.cpu.get_registers())
                 );
