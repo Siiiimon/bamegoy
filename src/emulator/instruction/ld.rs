@@ -2,21 +2,6 @@ use crate::emulator::{bus, cpu};
 use crate::emulator::disassemble::{Disasm, Operand};
 use crate::emulator::util;
 
-pub fn r8_n8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
-    let register_code = (opcode >> 3) & 0b111;
-    let register = util::get_register_by_code(register_code);
-    cpu.pc += 1;
-    let value = match bus.read_byte(cpu.pc) {
-        Ok(byte) => byte,
-        Err(e) => {
-            eprintln!("{}", e);
-            return;
-        }
-    };
-    cpu.set_register(bus, register, value);
-    cpu.pc += 1;
-}
-
 pub fn r16_n16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     cpu.pc += 1;
@@ -29,20 +14,6 @@ pub fn r16_n16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     };
     cpu.set_register_pair(pair, value);
     cpu.pc += 2;
-}
-
-pub fn r8_r8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
-    let dst = util::get_register_by_code((opcode >> 3) & 0b111);
-    let src = util::get_register_by_code(opcode & 0b111);
-
-    if dst == src {
-        cpu.pc += 1;
-        return;
-    }
-
-    let value = cpu.get_register(bus, src);
-    cpu.set_register(bus, dst, value);
-    cpu.pc += 1;
 }
 
 pub fn a16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {

@@ -81,8 +81,10 @@ impl CPU {
             0o304 | 0o314 | 0o324 | 0o334 => instruction::jump::call_cc,
             0o307 | 0o317 | 0o327 | 0o337 | 0o347 | 0o357 | 0o367 | 0o377 => instruction::jump::rst,
 
-            0o02 | 0o22 | 0o42 | 0o62 => instruction::load::r16addr_a,
-            0o12 | 0o32 | 0o52 | 0o72 => instruction::load::a_r16addr,
+            0o02 | 0o22 | 0o42 | 0o62 => instruction::load::ld_r16addr_a,
+            0o12 | 0o32 | 0o52 | 0o72 => instruction::load::ld_a_r16addr,
+            0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => instruction::load::ld_r8_n8,
+            0o100..=0o165 | 0o167..=0o177 => instruction::load::ld_r8_r8,
 
             0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
                 let pair = get_register_pair_by_code(opcode >> 4);
@@ -97,12 +99,6 @@ impl CPU {
             }
             0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
                 instruction::dec::r8(self, bus, opcode);
-            }
-            0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => {
-                instruction::ld::r8_n8(self, bus, opcode);
-            }
-            0o100..=0o175 | 0o167..=0o177 => {
-                instruction::ld::r8_r8(self, bus, opcode);
             }
             0o01 | 0o21 | 0o41 | 0o61 => {
                 instruction::ld::r16_n16(self, bus, opcode);
