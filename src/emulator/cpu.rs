@@ -2,7 +2,6 @@ use crate::disassemble;
 use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
 use crate::emulator::instruction::Instruction;
-use crate::emulator::util::get_register_pair_by_code;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
 
@@ -85,6 +84,15 @@ impl CPU {
             0o12 | 0o32 | 0o52 | 0o72 => instruction::load::ld_a_r16addr,
             0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => instruction::load::ld_r8_n8,
             0o100..=0o165 | 0o167..=0o177 => instruction::load::ld_r8_r8,
+            0o340 => instruction::load::ldh_a8addr_a,
+            0o360 => instruction::load::ldh_a_a8addr,
+            0o342 => instruction::load::ldh_caddr_a,
+            0o352 => instruction::load::ld_a16addr_a,
+            0o362 => instruction::load::ldh_a_caddr,
+            0o372 => instruction::load::ld_a_a16addr,
+
+            // 0o10 => instruction::ld::a16_sp(self, bus),
+            // 0o370 => instruction::ld::hl_sp_e8(self, bus),
 
             // 0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
             //     let pair = get_register_pair_by_code(opcode >> 4);
@@ -104,14 +112,6 @@ impl CPU {
             //     instruction::ld::r16_n16(self, bus, opcode);
             // }
             
-            // 0o352 => instruction::ld::a16_a(self, bus),
-            // 0o372 => instruction::ld::a_a16(self, bus),
-            // 0o10 => instruction::ld::a16_sp(self, bus),
-            // 0o370 => instruction::ld::hl_sp_e8(self, bus),
-            // 0o340 => instruction::ldh::a8_a(self, bus),
-            // 0o360 => instruction::ldh::a_a8(self, bus),
-            // 0o342 => instruction::ldh::c_a(self, bus),
-            // 0o362 => instruction::ldh::a_c(self, bus),
             // 0o301 | 0o321 | 0o341 | 0o361 => {
             //     instruction::pop::r16(self, bus, opcode);
             // }

@@ -1,40 +1,5 @@
 use crate::emulator::{bus, cpu, disassemble::{Disasm, Operand}, util};
 
-pub fn a8_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let value = cpu.get_register(bus, util::Register::A);
-    let addr = bus.read_byte(cpu.pc + 1).unwrap();
-
-    let _ = bus.write_byte(addr as u16 + 0xFF00, value);
-
-    cpu.pc += 2;
-}
-
-pub fn a_a8(cpu: &mut cpu::CPU, bus: &mut bus::Bus,) {
-    let addr = bus.read_byte(cpu.pc + 1).unwrap();
-    let value = bus.read_byte(addr as u16 + 0xFF00).unwrap();
-
-    cpu.set_register(bus, util::Register::A, value);
-
-    cpu.pc += 2;
-}
-
-pub fn c_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let value = cpu.get_register(bus, util::Register::A);
-    let offset = cpu.get_register(bus, util::Register::C);
-
-    let _ = bus.write_byte(0xFF00 + offset as u16, value);
-
-    cpu.pc += 1;
-}
-
-pub fn a_c(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let offset = cpu.get_register(bus, util::Register::C);
-    let value = bus.read_byte(0xFF00 + offset as u16).unwrap();
-
-    cpu.set_register(bus, util::Register::A, value);
-
-    cpu.pc += 1;
-}
 
 pub fn a8_a_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let offset = bus.read_byte(addr + 1).unwrap();

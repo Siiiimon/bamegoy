@@ -16,24 +16,6 @@ pub fn r16_n16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     cpu.pc += 2;
 }
 
-pub fn a16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let addr = bus.read_word(cpu.pc + 1).unwrap();
-    let content = cpu.get_register(bus, util::Register::A);
-
-    let _ = bus.write_byte(addr, content);
-
-    cpu.pc += 3;
-}
-
-pub fn a_a16(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let addr = bus.read_word(cpu.pc + 1).unwrap();
-    let content = bus.read_byte(addr).unwrap();
-
-    cpu.set_register(bus, util::Register::A, content);
-
-    cpu.pc += 3;
-}
-
 pub fn a16_sp(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let addr = bus.read_word(cpu.pc + 1).unwrap();
     let sp = cpu.get_register_pair(util::RegisterPair::SP);

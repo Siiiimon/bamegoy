@@ -90,3 +90,57 @@ pub fn ld_r8_r8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     cpu.set_register(bus, dst, value);
     (1, 4)
 }
+
+pub fn ldh_a8addr_a(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let value = cpu.get_register(bus, util::Register::A);
+    let addr = bus.read_byte(cpu.pc + 1).unwrap();
+
+    let _ = bus.write_byte(addr as u16 + 0xFF00, value);
+
+    (2, 12)
+}
+
+pub fn ldh_a_a8addr(cpu: &mut CPU, bus: &mut Bus,) -> (u16, u8) {
+    let addr = bus.read_byte(cpu.pc + 1).unwrap();
+    let value = bus.read_byte(addr as u16 + 0xFF00).unwrap();
+
+    cpu.set_register(bus, util::Register::A, value);
+
+    (2, 12)
+}
+
+pub fn ldh_caddr_a(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let value = cpu.get_register(bus, util::Register::A);
+    let offset = cpu.get_register(bus, util::Register::C);
+
+    let _ = bus.write_byte(0xFF00 + offset as u16, value);
+
+    (1, 8)
+}
+
+pub fn ld_a16addr_a(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let addr = bus.read_word(cpu.pc + 1).unwrap();
+    let content = cpu.get_register(bus, util::Register::A);
+
+    let _ = bus.write_byte(addr, content);
+
+    (3, 16)
+}
+
+pub fn ldh_a_caddr(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let offset = cpu.get_register(bus, util::Register::C);
+    let value = bus.read_byte(0xFF00 + offset as u16).unwrap();
+
+    cpu.set_register(bus, util::Register::A, value);
+
+    (1, 8)
+}
+
+pub fn ld_a_a16addr(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let addr = bus.read_word(cpu.pc + 1).unwrap();
+    let content = bus.read_byte(addr).unwrap();
+
+    cpu.set_register(bus, util::Register::A, content);
+
+    (3, 16)
+}
