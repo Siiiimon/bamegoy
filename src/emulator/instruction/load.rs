@@ -144,3 +144,77 @@ pub fn ld_a_a16addr(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
 
     (3, 16)
 }
+
+pub fn ld_a16addr_sp(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let addr = bus.read_word(cpu.pc + 1).unwrap();
+    let sp = cpu.get_register_pair(util::RegisterPair::SP);
+
+    let _ = bus.write_word(addr, sp);
+    (3, 20)
+}
+
+pub fn ld_r16_n16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+
+    let value = bus.read_word(cpu.pc + 1).unwrap();
+    cpu.set_register_pair(pair, value);
+    
+    (3, 12)
+}
+
+pub fn ld_hl_sp_e8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let sp = cpu.sp;
+    let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8 as i16;
+
+    let result = (sp as i16).wrapping_add(offset) as u16;
+    cpu.set_register_pair(util::RegisterPair::HL, result);
+
+    let lo_sp = sp & 0xFF;
+    let lo_offset = offset as u16 & 0xFF;
+
+    cpu.flags.zero = false;
+    cpu.flags.subtraction = false;
+    cpu.flags.half_carry = ((lo_sp ^ lo_offset ^ (lo_sp + lo_offset)) & 0x10) == 0x10;
+    cpu.flags.carry = ((lo_sp ^ lo_offset ^ (lo_sp + lo_offset)) & 0x100) == 0x100;
+
+    (2, 12)
+}
+
+pub fn ld_sp_hl(cpu: &mut CPU, _bus: &mut Bus) -> (u16, u8) {
+    let value = cpu.get_register_pair(RegisterPair::HL);
+    cpu.sp = value;
+
+    (2, 12)
+}
+
+pub fn pop_r16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+    let content = bus.pop_word(&mut cpu.sp).unwrap();
+
+    if pair == util::RegisterPair::SP {
+        cpu.set_register(bus, util::Register::A, (content >> 8) as u8);
+        cpu.set_flags_as_byte(content as u8);
+    } else {
+        cpu.set_register_pair(pair, content);
+    };
+
+    (1, 12)
+}
+
+pub fn push_r16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
+    let opcode = get_opcode(cpu, bus);
+    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
+
+    let content = if pair == util::RegisterPair::SP {
+        let hi = cpu.get_register(bus, util::Register::A);
+        let lo = cpu.get_flags_as_byte();
+        ((hi as u16) << 8) | lo as u16
+    } else {
+        cpu.get_register_pair(pair)
+    };
+
+    let _ = bus.push_word(&mut cpu.sp, content);
+    (1, 12)
+}

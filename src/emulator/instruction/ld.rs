@@ -2,46 +2,6 @@ use crate::emulator::{bus, cpu};
 use crate::emulator::disassemble::{Disasm, Operand};
 use crate::emulator::util;
 
-pub fn r16_n16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
-    let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
-    cpu.pc += 1;
-    let value = match bus.read_word(cpu.pc) {
-        Ok(word) => word,
-        Err(e) => {
-            eprintln!("{}", e);
-            return;
-        }
-    };
-    cpu.set_register_pair(pair, value);
-    cpu.pc += 2;
-}
-
-pub fn a16_sp(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let addr = bus.read_word(cpu.pc + 1).unwrap();
-    let sp = cpu.get_register_pair(util::RegisterPair::SP);
-
-    let _ = bus.write_word(addr, sp);
-    cpu.pc += 3;
-}
-
-pub fn hl_sp_e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
-    let sp = cpu.sp;
-    let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8 as i16;
-
-    let result = (sp as i16).wrapping_add(offset) as u16;
-    cpu.set_register_pair(util::RegisterPair::HL, result);
-
-    let lo_sp = sp & 0xFF;
-    let lo_offset = offset as u16 & 0xFF;
-
-    cpu.flags.zero = false;
-    cpu.flags.subtraction = false;
-    cpu.flags.half_carry = ((lo_sp ^ lo_offset ^ (lo_sp + lo_offset)) & 0x10) == 0x10;
-    cpu.flags.carry = ((lo_sp ^ lo_offset ^ (lo_sp + lo_offset)) & 0x100) == 0x100;
-
-    cpu.pc += 2;
-}
-
 pub fn r8_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let reg = util::get_register_by_code((opcode >> 3) & 0b111);
     let content = bus.read_byte(addr + 1).unwrap();

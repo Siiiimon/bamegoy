@@ -4,6 +4,7 @@ use super::bus::Bus;
 pub mod control;
 pub mod jump;
 pub mod load;
+pub mod logic;
 
 pub mod inc;
 pub mod dec;

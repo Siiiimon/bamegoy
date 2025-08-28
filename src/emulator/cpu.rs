@@ -107,8 +107,37 @@ impl CPU {
             0o362 => instruction::load::ldh_a_caddr,
             0o372 => instruction::load::ld_a_a16addr,
 
-            // 0o10 => instruction::ld::a16_sp(self, bus),
-            // 0o370 => instruction::ld::hl_sp_e8(self, bus),
+            0o10 => instruction::load::ld_a16addr_sp,
+            0o01 | 0o21 | 0o41 | 0o61 => instruction::load::ld_r16_n16,
+            0o370 => instruction::load::ld_hl_sp_e8,
+            0o371 => instruction::load::ld_sp_hl,
+            0o301 | 0o321 | 0o341 | 0o361 => instruction::load::pop_r16,
+            0o305 | 0o325 | 0o345 | 0o365 => instruction::load::push_r16,
+
+            0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => instruction::logic::inc_r8,
+            0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => instruction::logic::dec_r8,
+            0o47 => instruction::logic::daa,
+            0o57 => instruction::logic::cpl,
+            0o67 => instruction::logic::scf,
+            0o77 => instruction::logic::ccf,
+            0o200..=0o207 => instruction::logic::add_a_r8,
+            0o210..=0o217 => instruction::logic::adc_a_r8,
+            0o220..=0o227 => instruction::logic::sub_a_r8,
+            0o230..=0o237 => instruction::logic::sbc_a_r8,
+            0o240..=0o247 => instruction::logic::and_a_r8,
+            0o250..=0o257 => instruction::logic::xor_a_r8,
+            0o260..=0o267 => instruction::logic::or_a_r8,
+            0o270..=0o277 => instruction::logic::cp_a_r8,
+            0o306 => instruction::logic::add_a_n8,
+            0o316 => instruction::logic::adc_a_n8,
+            0o326 => instruction::logic::sub_a_n8,
+            0o336 => instruction::logic::sbc_a_n8,
+            0o346 => instruction::logic::and_a_n8,
+            0o356 => instruction::logic::xor_a_n8,
+            0o366 => instruction::logic::or_a_n8,
+            0o376 => instruction::logic::cp_a_n8,
+
+
 
             // 0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
             //     let pair = get_register_pair_by_code(opcode >> 4);
@@ -118,66 +147,21 @@ impl CPU {
             //         instruction::dec::r16(self, pair);
             //     }
             // }
-            // 0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
-            //     instruction::inc::r8(self, bus, opcode);
-            // }
-            // 0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
-            //     instruction::dec::r8(self, bus, opcode);
-            // }
-            // 0o01 | 0o21 | 0o41 | 0o61 => {
-            //     instruction::ld::r16_n16(self, bus, opcode);
-            // }
             
-            // 0o301 | 0o321 | 0o341 | 0o361 => {
-            //     instruction::pop::r16(self, bus, opcode);
-            // }
-            // 0o305 | 0o325 | 0o345 | 0o365 => {
-            //     instruction::push::r16(self, bus, opcode);
-            // }
-            // 0o200..=0o207 => {
-            //     instruction::add::r8(self, bus, opcode);
-            // }
+            
+            
+            
+            
+            
             // 0o11 | 0o31 | 0o51 | 0o71 => {
             //     instruction::add::r16(self, opcode);
             // }
             // 0o350 => instruction::add::sp_e8(self, bus),
-            // 0o306 => instruction::add::a_n8(self, bus),
-            // 0o210..=0o217 => {
-            //     instruction::adc::r8(self, bus, opcode);
-            // }
-            // 0o316 => instruction::adc::a_n8(self, bus),
-            // 0o220..=0o227 => {
-            //     instruction::sub::r8(self, bus, opcode);
-            // }
-            // 0o326 => instruction::sub::a_n8(self, bus),
-            // 0o230..=0o237 => {
-            //     instruction::sbc::r8(self, bus, opcode);
-            // }
-            // 0o336 => instruction::sbc::a_n8(self, bus),
-            // 0o240..=0o247 => {
-            //     instruction::and::r8(self, bus, opcode);
-            // }
-            // 0o346 => instruction::and::a_n8(self, bus),
-            // 0o250..=0o257 => {
-            //     instruction::xor::r8(self, bus, opcode);
-            // }
-            // 0o356 => instruction::xor::a_n8(self, bus),
-            // 0o260..=0o267 => {
-            //     instruction::or::r8(self, bus, opcode);
-            // }
-            // 0o366 => instruction::or::a_n8(self, bus),
-            // 0o270..=0o277 => {
-            //     instruction::cp::r8(self, bus, opcode);
-            // }
+            
             // 0o07 => instruction::rotate::rlca(self, bus),
             // 0o17 => instruction::rotate::rrca(self, bus),
             // 0o27 => instruction::rotate::rla(self, bus),
             // 0o37 => instruction::rotate::rra(self, bus),
-            // 0o47 => instruction::accumulator::daa(self, bus),
-            // 0o57 => instruction::accumulator::cpl(self, bus),
-            // 0o67 => instruction::carry::scf(self),
-            // 0o77 => instruction::carry::ccf(self),
-            // 0o376 => instruction::cp::a_n8(self, bus),
             // 0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
             // | 0o375 => {
             //     return;
