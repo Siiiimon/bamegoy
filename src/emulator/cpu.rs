@@ -86,86 +86,86 @@ impl CPU {
             0o06 | 0o16 | 0o26 | 0o36 | 0o46 | 0o56 | 0o66 | 0o76 => instruction::load::ld_r8_n8,
             0o100..=0o165 | 0o167..=0o177 => instruction::load::ld_r8_r8,
 
-            0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
-                let pair = get_register_pair_by_code(opcode >> 4);
-                if (opcode >> 3) & 0 == 1 {
-                    instruction::inc::r16(self, pair);
-                } else {
-                    instruction::dec::r16(self, pair);
-                }
-            }
-            0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
-                instruction::inc::r8(self, bus, opcode);
-            }
-            0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
-                instruction::dec::r8(self, bus, opcode);
-            }
-            0o01 | 0o21 | 0o41 | 0o61 => {
-                instruction::ld::r16_n16(self, bus, opcode);
-            }
+            // 0o03 | 0o13 | 0o23 | 0o33 | 0o43 | 0o53 | 0o63 | 0o73 => {
+            //     let pair = get_register_pair_by_code(opcode >> 4);
+            //     if (opcode >> 3) & 0 == 1 {
+            //         instruction::inc::r16(self, pair);
+            //     } else {
+            //         instruction::dec::r16(self, pair);
+            //     }
+            // }
+            // 0o04 | 0o14 | 0o24 | 0o34 | 0o44 | 0o54 | 0o64 | 0o74 => {
+            //     instruction::inc::r8(self, bus, opcode);
+            // }
+            // 0o05 | 0o15 | 0o25 | 0o35 | 0o45 | 0o55 | 0o65 | 0o75 => {
+            //     instruction::dec::r8(self, bus, opcode);
+            // }
+            // 0o01 | 0o21 | 0o41 | 0o61 => {
+            //     instruction::ld::r16_n16(self, bus, opcode);
+            // }
             
-            0o352 => instruction::ld::a16_a(self, bus),
-            0o372 => instruction::ld::a_a16(self, bus),
-            0o10 => instruction::ld::a16_sp(self, bus),
-            0o370 => instruction::ld::hl_sp_e8(self, bus),
-            0o340 => instruction::ldh::a8_a(self, bus),
-            0o360 => instruction::ldh::a_a8(self, bus),
-            0o342 => instruction::ldh::c_a(self, bus),
-            0o362 => instruction::ldh::a_c(self, bus),
-            0o301 | 0o321 | 0o341 | 0o361 => {
-                instruction::pop::r16(self, bus, opcode);
-            }
-            0o305 | 0o325 | 0o345 | 0o365 => {
-                instruction::push::r16(self, bus, opcode);
-            }
-            0o200..=0o207 => {
-                instruction::add::r8(self, bus, opcode);
-            }
-            0o11 | 0o31 | 0o51 | 0o71 => {
-                instruction::add::r16(self, opcode);
-            }
-            0o350 => instruction::add::sp_e8(self, bus),
-            0o306 => instruction::add::a_n8(self, bus),
-            0o210..=0o217 => {
-                instruction::adc::r8(self, bus, opcode);
-            }
-            0o316 => instruction::adc::a_n8(self, bus),
-            0o220..=0o227 => {
-                instruction::sub::r8(self, bus, opcode);
-            }
-            0o326 => instruction::sub::a_n8(self, bus),
-            0o230..=0o237 => {
-                instruction::sbc::r8(self, bus, opcode);
-            }
-            0o336 => instruction::sbc::a_n8(self, bus),
-            0o240..=0o247 => {
-                instruction::and::r8(self, bus, opcode);
-            }
-            0o346 => instruction::and::a_n8(self, bus),
-            0o250..=0o257 => {
-                instruction::xor::r8(self, bus, opcode);
-            }
-            0o356 => instruction::xor::a_n8(self, bus),
-            0o260..=0o267 => {
-                instruction::or::r8(self, bus, opcode);
-            }
-            0o366 => instruction::or::a_n8(self, bus),
-            0o270..=0o277 => {
-                instruction::cp::r8(self, bus, opcode);
-            }
-            0o07 => instruction::rotate::rlca(self, bus),
-            0o17 => instruction::rotate::rrca(self, bus),
-            0o27 => instruction::rotate::rla(self, bus),
-            0o37 => instruction::rotate::rra(self, bus),
-            0o47 => instruction::accumulator::daa(self, bus),
-            0o57 => instruction::accumulator::cpl(self, bus),
-            0o67 => instruction::carry::scf(self),
-            0o77 => instruction::carry::ccf(self),
-            0o376 => instruction::cp::a_n8(self, bus),
-            0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
-            | 0o375 => {
-                return;
-            }
+            // 0o352 => instruction::ld::a16_a(self, bus),
+            // 0o372 => instruction::ld::a_a16(self, bus),
+            // 0o10 => instruction::ld::a16_sp(self, bus),
+            // 0o370 => instruction::ld::hl_sp_e8(self, bus),
+            // 0o340 => instruction::ldh::a8_a(self, bus),
+            // 0o360 => instruction::ldh::a_a8(self, bus),
+            // 0o342 => instruction::ldh::c_a(self, bus),
+            // 0o362 => instruction::ldh::a_c(self, bus),
+            // 0o301 | 0o321 | 0o341 | 0o361 => {
+            //     instruction::pop::r16(self, bus, opcode);
+            // }
+            // 0o305 | 0o325 | 0o345 | 0o365 => {
+            //     instruction::push::r16(self, bus, opcode);
+            // }
+            // 0o200..=0o207 => {
+            //     instruction::add::r8(self, bus, opcode);
+            // }
+            // 0o11 | 0o31 | 0o51 | 0o71 => {
+            //     instruction::add::r16(self, opcode);
+            // }
+            // 0o350 => instruction::add::sp_e8(self, bus),
+            // 0o306 => instruction::add::a_n8(self, bus),
+            // 0o210..=0o217 => {
+            //     instruction::adc::r8(self, bus, opcode);
+            // }
+            // 0o316 => instruction::adc::a_n8(self, bus),
+            // 0o220..=0o227 => {
+            //     instruction::sub::r8(self, bus, opcode);
+            // }
+            // 0o326 => instruction::sub::a_n8(self, bus),
+            // 0o230..=0o237 => {
+            //     instruction::sbc::r8(self, bus, opcode);
+            // }
+            // 0o336 => instruction::sbc::a_n8(self, bus),
+            // 0o240..=0o247 => {
+            //     instruction::and::r8(self, bus, opcode);
+            // }
+            // 0o346 => instruction::and::a_n8(self, bus),
+            // 0o250..=0o257 => {
+            //     instruction::xor::r8(self, bus, opcode);
+            // }
+            // 0o356 => instruction::xor::a_n8(self, bus),
+            // 0o260..=0o267 => {
+            //     instruction::or::r8(self, bus, opcode);
+            // }
+            // 0o366 => instruction::or::a_n8(self, bus),
+            // 0o270..=0o277 => {
+            //     instruction::cp::r8(self, bus, opcode);
+            // }
+            // 0o07 => instruction::rotate::rlca(self, bus),
+            // 0o17 => instruction::rotate::rrca(self, bus),
+            // 0o27 => instruction::rotate::rla(self, bus),
+            // 0o37 => instruction::rotate::rra(self, bus),
+            // 0o47 => instruction::accumulator::daa(self, bus),
+            // 0o57 => instruction::accumulator::cpl(self, bus),
+            // 0o67 => instruction::carry::scf(self),
+            // 0o77 => instruction::carry::ccf(self),
+            // 0o376 => instruction::cp::a_n8(self, bus),
+            // 0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355
+            // | 0o375 => {
+            //     return;
+            // }
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
@@ -194,6 +194,9 @@ impl CPU {
         };
 
         let instruction = self.decode(opcode);
+        let (length, _cycles) = instruction(self, bus);
+
+        self.pc += length;
 
         if self.should_trace_log {
             if let Some(disasm) = disassemble(&*bus, self.pc) {

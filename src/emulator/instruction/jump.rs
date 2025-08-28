@@ -3,7 +3,7 @@ use crate::emulator::cpu::CPU;
 use crate::emulator::instruction::get_opcode;
 use crate::emulator::util;
 
-pub fn jr_e8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn jr_e8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8;
     let target = if offset < 0 {
         cpu.pc.wrapping_add(2).wrapping_sub((-offset) as u16)
@@ -16,7 +16,7 @@ pub fn jr_e8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     (0, 12)
 }
 
-pub fn jr_cc_e8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn jr_cc_e8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
 
     let should_jump = match opcode >> 4 {
@@ -35,7 +35,7 @@ pub fn jr_cc_e8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     }
 }
 
-pub fn ret(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn ret(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let addr = match bus.pop_word(&mut cpu.sp) {
         Ok(addr) => addr,
         Err(e) => panic!("Failed to pop return address: {}", e),
@@ -46,7 +46,7 @@ pub fn ret(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     (0, 16)
 }
 
-pub fn ret_cc(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn ret_cc(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,
@@ -63,24 +63,24 @@ pub fn ret_cc(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     }
 }
 
-pub fn reti(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn reti(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     bus.interrupts.ime = true;
     ret(cpu, bus)
 }
 
-pub fn jp_hl(cpu: &mut CPU, _bus: &mut Bus) -> (u8, u8) {
+pub fn jp_hl(cpu: &mut CPU, _bus: &mut Bus) -> (u16, u8) {
     let addr = cpu.get_register_pair(util::RegisterPair::HL);
     cpu.pc = addr;
     (0, 4)
 }
 
-pub fn jp_a16(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn jp_a16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let target = bus.read_word(cpu.pc + 1).unwrap();
     cpu.pc = target;
     (0, 16)
 }
 
-pub fn jp_cc_a16(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn jp_cc_a16(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,
@@ -97,7 +97,7 @@ pub fn jp_cc_a16(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     }
 }
 
-pub fn call(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn call(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let lo = bus.read_byte(cpu.pc + 1).unwrap();
     let hi = bus.read_byte(cpu.pc + 2).unwrap();
 
@@ -106,7 +106,7 @@ pub fn call(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     (0, 24)
 }
 
-pub fn call_cc(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn call_cc(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let should_jump = match opcode >> 4 {
         2 => !cpu.flags.zero,
@@ -123,7 +123,7 @@ pub fn call_cc(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     }
 }
 
-pub fn rst(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn rst(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let addr = ((opcode >> 3) & 0b111) * 8;
 

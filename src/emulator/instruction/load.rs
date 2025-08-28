@@ -1,6 +1,6 @@
 use crate::emulator::{bus::Bus, cpu::CPU, instruction::get_opcode, util::{self, Register, RegisterPair}};
 
-pub fn ld_r16addr_a(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn ld_r16addr_a(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let addr = cpu.get_register_pair(pair);
@@ -20,7 +20,7 @@ pub fn ld_r16addr_a(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     (1, 8)
 }
 
-pub fn ld_a_r16addr(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn ld_a_r16addr(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
     let addr = cpu.get_register_pair(pair);
@@ -43,7 +43,7 @@ pub fn ld_a_r16addr(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     (1, 8)
 }
 
-pub fn ld_r8_n8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn ld_r8_n8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let register_code = (opcode >> 3) & 0b111;
     let register = util::get_register_by_code(register_code);
@@ -65,7 +65,7 @@ pub fn ld_r8_n8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
     (2, 8)
 }
 
-pub fn ld_r8_r8(cpu: &mut CPU, bus: &mut Bus) -> (u8, u8) {
+pub fn ld_r8_r8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);
     let dst = util::get_register_by_code((opcode >> 3) & 0b111);
     let src = util::get_register_by_code(opcode & 0b111);

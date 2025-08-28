@@ -23,7 +23,7 @@ pub mod rotate;
 pub mod carry;
 pub mod accumulator;
 
-pub type Instruction = fn(&mut CPU, &mut Bus) -> (u8, u8);
+pub type Instruction = fn(&mut CPU, &mut Bus) -> (u16, u8);
 
 pub fn get_opcode(cpu: &mut CPU, bus: &mut Bus) -> u8 {
     match bus.read_byte(cpu.pc) {
