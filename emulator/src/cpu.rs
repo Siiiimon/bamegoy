@@ -46,6 +46,8 @@ pub struct CPU {
     pub is_halting: bool,
 
     pub should_trace_log: bool,
+
+    pub cycle_cooldown: u8,
 }
 
 impl CPU {
@@ -69,6 +71,7 @@ impl CPU {
             ie_enable_delay: false,
             is_halting: false,
             should_trace_log,
+            cycle_cooldown: 0,
         }
     }
 
@@ -156,13 +159,18 @@ impl CPU {
     }
 
     pub fn step(&mut self, bus: &mut Bus) {
+        if self.is_halting {
+            return;
+        }
+        
+        if self.cycle_cooldown > 0 {
+            self.cycle_cooldown -= 1;
+            return;
+        }
+
         if self.ie_enable_delay {
             self.ie_enable_delay = false;
             bus.interrupts.ime = true;
-        }
-
-        if self.is_halting {
-            return;
         }
 
         self.handle_interrupts(bus);
@@ -177,9 +185,10 @@ impl CPU {
         };
 
         let instruction = self.decode(opcode);
-        let (length, _cycles) = instruction(self, bus);
+        let (length, cycles) = instruction(self, bus);
 
         self.pc += length;
+        self.cycle_cooldown = cycles;
 
         // if self.should_trace_log {
         //     if let Some(disasm) = disassemble(&*bus, self.pc) {

@@ -1,8 +1,6 @@
 use bamegoy_core::{protocol::{command::Command, event::Event, policy}, Emulator};
 
 
-
-
 #[test]
 pub fn init_kill() {
     let emulator = Emulator::init(vec![0; 0x8000], false);

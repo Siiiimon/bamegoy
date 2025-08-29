@@ -5,7 +5,7 @@ use crate::protocol::event::Event;
 use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use crate::protocol::policy::Policy;
 
 pub mod bus;
@@ -13,6 +13,7 @@ pub mod cpu;
 pub mod instruction;
 pub mod util;
 pub mod protocol;
+mod timing;
 
 pub struct Emulator {
     runtime: Runtime,
@@ -22,8 +23,7 @@ pub struct Emulator {
 
 pub struct Runtime {
     state: EmulatorState,
-    last_step_time: Instant,
-    step_interval: Duration,
+    drift: f64,
     should_exit: bool,
 
     tx: Sender<Event>,
@@ -53,8 +53,7 @@ impl Emulator {
         Self {
             runtime: Runtime {
                 state: EmulatorState::Paused,
-                last_step_time: Instant::now(),
-                step_interval: Duration::from_millis(100),
+                drift: 0.0,
                 should_exit: false,
                 tx,
                 rx,
@@ -114,14 +113,22 @@ impl Emulator {
     }
 
     fn advance(&mut self) {
-        self.cpu.step(&mut self.bus);
+        let start = Instant::now();
 
-        if let Some(policy) = &mut self.runtime.policy {
-            if policy(&mut self.cpu, &mut self.bus) {
-                self.runtime.policy = None;
-                self.runtime.state = EmulatorState::PauseRequested;
+        for _ in 0..timing::CYCLES_PER_SLICE-1 {
+            self.cpu.step(&mut self.bus);
+
+            if let Some(policy) = &mut self.runtime.policy {
+                if policy(&mut self.cpu, &mut self.bus) {
+                    self.runtime.policy = None;
+                    self.runtime.state = EmulatorState::PauseRequested;
+                    return;
+                }
             }
         }
+
+        self.runtime.drift += timing::calculate_drift(start);
+        timing::nap(&mut self.runtime.drift);
     }
 
     fn live(&mut self) {
@@ -130,7 +137,7 @@ impl Emulator {
         while !self.runtime.should_exit {
             self.handle_command();
 
-            self.handle_state();            
+            self.handle_state();
         }
     }
 
