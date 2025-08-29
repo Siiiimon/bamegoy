@@ -147,6 +147,8 @@ impl CPU {
             0o27 => instruction::bit::rla,
             0o37 => instruction::bit::rra,
 
+            0o323 | 0o333 | 0o343 | 0o353 | 0o344 | 0o354 | 0o364 | 0o374 | 0o335 | 0o355 | 0o375 => instruction::empty,
+
             _ => {
                 unimplemented!("Opcode {:02X} not implemented yet", opcode);
             }
