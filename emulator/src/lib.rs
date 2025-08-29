@@ -105,17 +105,21 @@ impl Emulator {
             }
             EmulatorState::Paused => {}
             EmulatorState::Running => {
-                self.cpu.step(&mut self.bus);
-
-                if let Some(policy) = &mut self.runtime.policy {
-                    if policy(&mut self.cpu, &mut self.bus) {
-                        self.runtime.policy = None;
-                        self.runtime.state = EmulatorState::PauseRequested;
-                    }
-                }
+                self.advance();
             },
             EmulatorState::Dying => {
                 self.runtime.should_exit = true;
+            }
+        }
+    }
+
+    fn advance(&mut self) {
+        self.cpu.step(&mut self.bus);
+
+        if let Some(policy) = &mut self.runtime.policy {
+            if policy(&mut self.cpu, &mut self.bus) {
+                self.runtime.policy = None;
+                self.runtime.state = EmulatorState::PauseRequested;
             }
         }
     }
