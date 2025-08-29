@@ -1,8 +1,5 @@
 use std::fmt;
 
-use catppuccin::Color;
-use egui::Color32;
-
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Register {
     B,
@@ -73,13 +70,4 @@ pub fn get_register_pair_by_code(code: u8) -> RegisterPair {
         3 => RegisterPair::SP,
         _ => unreachable!(),
     }
-}
-
-pub fn color32_from_catppuccin(cat: Color) -> Color32 {
-    Color32::from_hex(&cat.hex.to_string()).unwrap()
-}
-
-pub fn color32_from_catppuccin_with_alpha(cat: Color, alpha: u8) -> Color32 {
-    let rgb = cat.rgb;
-    Color32::from_rgba_unmultiplied(rgb.r, rgb.g, rgb.b, alpha)
 }

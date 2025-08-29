@@ -1,4 +1,4 @@
-use crate::emulator::{bus::Bus, cpu::CPU, instruction::get_opcode, util::{self, Register, RegisterPair}};
+use crate::{bus::Bus, cpu::CPU, instruction::get_opcode, util::{self, Register, RegisterPair}};
 
 pub fn ld_r16addr_a(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);

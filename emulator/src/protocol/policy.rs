@@ -1,5 +1,5 @@
-use crate::emulator::bus::Bus;
-use crate::emulator::cpu::CPU;
+use crate::bus::Bus;
+use crate::cpu::CPU;
 
 pub type Policy = Box<dyn FnMut(&CPU, &Bus) -> bool + Send>;
 

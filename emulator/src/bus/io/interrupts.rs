@@ -1,4 +1,4 @@
-use crate::emulator::bus::error::BusError;
+use crate::bus::error::BusError;
 
 pub struct Interrupts {
     pub ime: bool,

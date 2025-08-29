@@ -1,4 +1,4 @@
-use crate::emulator::{bus::Bus, cpu::CPU, instruction::get_opcode, util::{self, Register}};
+use crate::{bus::Bus, cpu::CPU, instruction::get_opcode, util::{self, Register}};
 
 pub fn inc_r8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let opcode = get_opcode(cpu, bus);

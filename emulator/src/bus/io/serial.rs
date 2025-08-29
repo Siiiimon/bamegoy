@@ -1,4 +1,4 @@
-use crate::emulator::bus::error::BusError;
+use crate::bus::error::BusError;
 
 use super::interrupts::Interrupt;
 

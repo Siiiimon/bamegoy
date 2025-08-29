@@ -1,17 +1,18 @@
-use crate::emulator::bus::Bus;
-use crate::emulator::cpu::{Registers, CPU};
+use crate::bus::Bus;
+use crate::cpu::CPU;
+use crate::protocol::command::Command;
+use crate::protocol::event::Event;
 use std::sync::mpsc::TryRecvError;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
-use crate::emulator::policy::Policy;
+use crate::protocol::policy::Policy;
 
 pub mod bus;
 pub mod cpu;
 pub mod instruction;
-pub mod disassemble;
 pub mod util;
-pub mod policy;
+pub mod protocol;
 
 pub struct Emulator {
     runtime: Runtime,
@@ -25,8 +26,8 @@ pub struct Runtime {
     step_interval: Duration,
     should_exit: bool,
 
-    tx: Sender<EmulatorMessage>,
-    rx: Receiver<DriverMessage>,
+    tx: Sender<Event>,
+    rx: Receiver<Command>,
     policy: Option<Policy>,
 }
 
@@ -40,27 +41,12 @@ pub enum EmulatorState {
 
 pub struct Handle {
     pub thread: JoinHandle<()>,
-    pub tx: Sender<DriverMessage>,
-    pub rx: Receiver<EmulatorMessage>,
-}
-
-pub enum DriverMessage {
-    Run(Option<Policy>),
-    PauseRequest,
-    Kill,
-
-    GetRegisters,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum EmulatorMessage {
-    Paused,
-    Running,
-    Registers(Registers),
+    pub tx: Sender<Command>,
+    pub rx: Receiver<Event>,
 }
 
 impl Emulator {
-     fn new(cartridge: Vec<u8>, should_trace: bool, tx: Sender<EmulatorMessage>, rx: Receiver<DriverMessage>) -> Self {
+     fn new(cartridge: Vec<u8>, should_trace: bool, tx: Sender<Event>, rx: Receiver<Command>) -> Self {
          let cpu = CPU::new(should_trace);
          let bus = Bus::from_cartridge_rom(cartridge).unwrap();
 
@@ -80,7 +66,7 @@ impl Emulator {
         }
     }
 
-    fn handle_driver_message(&mut self) {
+    fn handle_command(&mut self) {
         let msg = self.runtime.rx.try_recv();
 
         if let Err(e) = msg {
@@ -92,20 +78,20 @@ impl Emulator {
         }
 
         match msg.unwrap() {
-            DriverMessage::Run(policy) => {
+            Command::Run(policy) => {
                 self.runtime.state = EmulatorState::Running;
                 self.runtime.policy = policy;
-                self.runtime.tx.send(EmulatorMessage::Running).unwrap();
+                self.runtime.tx.send(Event::Running).unwrap();
             },
-            DriverMessage::PauseRequest => {
+            Command::PauseRequest => {
                 self.runtime.state = EmulatorState::PauseRequested;
             },
-            DriverMessage::Kill => {
+            Command::Kill => {
                 self.runtime.state = EmulatorState::Dying;
             },
-            DriverMessage::GetRegisters => {
+            Command::GetRegisters => {
                 let _ = self.runtime.tx.send(
-                    EmulatorMessage::Registers(self.cpu.get_registers())
+                    Event::Registers(self.cpu.get_registers())
                 );
             },
         }
@@ -115,7 +101,7 @@ impl Emulator {
         match self.runtime.state {
             EmulatorState::PauseRequested => {
                 self.runtime.state = EmulatorState::Paused;
-                self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
+                self.runtime.tx.send(Event::Paused).unwrap();
             }
             EmulatorState::Paused => {}
             EmulatorState::Running => {
@@ -135,10 +121,10 @@ impl Emulator {
     }
 
     fn live(&mut self) {
-        self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
+        self.runtime.tx.send(Event::Paused).unwrap();
 
         while !self.runtime.should_exit {
-            self.handle_driver_message();
+            self.handle_command();
 
             self.handle_state();            
         }

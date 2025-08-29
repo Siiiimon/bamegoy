@@ -1,9 +1,9 @@
 // use crate::disassemble;
-use crate::emulator::bus::Bus;
-use crate::emulator::instruction;
-use crate::emulator::instruction::Instruction;
-use crate::emulator::util::Register;
-use crate::emulator::util::RegisterPair;
+use crate::bus::Bus;
+use crate::instruction;
+use crate::instruction::Instruction;
+use crate::util::Register;
+use crate::util::RegisterPair;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Registers {

@@ -1,7 +1,7 @@
-use crate::emulator::bus::Bus;
-use crate::emulator::cpu::CPU;
-use crate::emulator::instruction::get_opcode;
-use crate::emulator::util;
+use crate::bus::Bus;
+use crate::cpu::CPU;
+use crate::instruction::get_opcode;
+use crate::util;
 
 pub fn jr_e8(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let offset = bus.read_byte(cpu.pc + 1).unwrap() as i8;

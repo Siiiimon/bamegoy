@@ -1,4 +1,4 @@
-use crate::emulator::{bus::Bus, cpu::CPU, util};
+use crate::{bus::Bus, cpu::CPU, util};
 
 pub fn rlca(cpu: &mut CPU, bus: &mut Bus) -> (u16, u8) {
     let value = cpu.get_register(bus, util::Register::A);

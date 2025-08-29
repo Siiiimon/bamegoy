@@ -1,5 +1,5 @@
-use crate::emulator::bus::Bus;
-use crate::emulator::cpu::CPU;
+use crate::bus::Bus;
+use crate::cpu::CPU;
 
 pub fn nop(_cpu: &mut CPU, _bus: &mut Bus) -> (u16, u8) {
     (1, 4)
