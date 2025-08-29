@@ -20,7 +20,7 @@ pub struct Emulator {
 }
 
 pub struct Runtime {
-    state: State,
+    state: EmulatorState,
     last_step_time: Instant,
     step_interval: Duration,
     should_exit: bool,
@@ -31,7 +31,7 @@ pub struct Runtime {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum State {
+pub enum EmulatorState {
     PauseRequested,
     Paused,
     Running,
@@ -66,7 +66,7 @@ impl Emulator {
 
         Self {
             runtime: Runtime {
-                state: State::Paused,
+                state: EmulatorState::Paused,
                 last_step_time: Instant::now(),
                 step_interval: Duration::from_millis(100),
                 should_exit: false,
@@ -93,15 +93,15 @@ impl Emulator {
 
         match msg.unwrap() {
             DriverMessage::Run(policy) => {
-                self.runtime.state = State::Running;
+                self.runtime.state = EmulatorState::Running;
                 self.runtime.policy = policy;
                 self.runtime.tx.send(EmulatorMessage::Running).unwrap();
             },
             DriverMessage::PauseRequest => {
-                self.runtime.state = State::PauseRequested;
+                self.runtime.state = EmulatorState::PauseRequested;
             },
             DriverMessage::Kill => {
-                self.runtime.state = State::Dying;
+                self.runtime.state = EmulatorState::Dying;
             },
             DriverMessage::GetRegisters => {
                 let _ = self.runtime.tx.send(
@@ -113,22 +113,22 @@ impl Emulator {
 
     fn handle_state(&mut self) {
         match self.runtime.state {
-            State::PauseRequested => {
-                self.runtime.state = State::Paused;
+            EmulatorState::PauseRequested => {
+                self.runtime.state = EmulatorState::Paused;
                 self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
             }
-            State::Paused => {}
-            State::Running => {
+            EmulatorState::Paused => {}
+            EmulatorState::Running => {
                 self.cpu.step(&mut self.bus);
 
                 if let Some(policy) = &mut self.runtime.policy {
                     if policy(&mut self.cpu, &mut self.bus) {
                         self.runtime.policy = None;
-                        self.runtime.state = State::PauseRequested;
+                        self.runtime.state = EmulatorState::PauseRequested;
                     }
                 }
             },
-            State::Dying => {
+            EmulatorState::Dying => {
                 self.runtime.should_exit = true;
             }
         }

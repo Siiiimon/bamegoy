@@ -24,7 +24,7 @@ impl Default for DisassemblyView {
     }
 }
 
-pub fn draw_disassembly_panel(
+pub fn draw_disassembly_view(
     ui: &mut egui::Ui,
     ui_state: &mut UiState,
     cpu: &CPU,
