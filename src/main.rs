@@ -1,6 +1,5 @@
 use bamegoy::emulator::{Emulator, EmulatorMessage, Handle, State};
 use eframe::egui;
-// use emulator::disassemble::disassemble;
 use std::sync::mpsc::TryRecvError;
 use std::{env, fs};
 use ui::{breakpoints::BreakpointView, disasm::DisassemblyView, settings::SettingsView};
@@ -56,6 +55,18 @@ impl BamegoyApp {
             ui_state: UiState::default(),
         }
     }
+
+    fn handle_emulator_message(&mut self, msg: EmulatorMessage) {
+        match msg {
+            EmulatorMessage::Paused => {
+                self.ui_state.emulator_state = State::Paused;
+            },
+            EmulatorMessage::Running => {
+                self.ui_state.emulator_state = State::Running;
+            },
+            _ => panic!("uncovered message")
+        }
+    }
 }
 
 fn main() -> eframe::Result {
@@ -89,17 +100,7 @@ fn main() -> eframe::Result {
 impl eframe::App for BamegoyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         match self.emulator_handle.rx.try_recv() {
-            Ok(msg) => {
-                match msg {
-                    EmulatorMessage::Paused => {
-                        self.ui_state.emulator_state = State::Paused;
-                    },
-                    EmulatorMessage::Running => {
-                        self.ui_state.emulator_state = State::Running;
-                    },
-                    _ => panic!("uncovered message")
-                }
-            },
+            Ok(msg) => self.handle_emulator_message(msg),
             Err(e) => {
                 if e != TryRecvError::Empty {
                     ui::draw_error(ctx, "Channel Disconnected".to_string());
