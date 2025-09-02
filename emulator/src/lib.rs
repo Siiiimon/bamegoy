@@ -1,5 +1,7 @@
+use std::sync::Arc;
+use crossbeam::atomic::AtomicCell;
 use crate::bus::Bus;
-use crate::cpu::CPU;
+use crate::cpu::{Registers, CPU};
 use crate::protocol::command::Command;
 use crate::protocol::event::Event;
 use std::sync::mpsc::TryRecvError;
@@ -29,6 +31,8 @@ pub struct Runtime {
     tx: Sender<Event>,
     rx: Receiver<Command>,
     policy: Option<Policy>,
+
+    register_snapshot: Arc<AtomicCell<Registers>>
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -43,6 +47,7 @@ pub struct Handle {
     pub thread: JoinHandle<()>,
     pub tx: Sender<Command>,
     pub rx: Receiver<Event>,
+    pub register_snapshot: Arc<AtomicCell<Registers>>
 }
 
 impl Emulator {
@@ -58,6 +63,7 @@ impl Emulator {
                 tx,
                 rx,
                 policy: None,
+                register_snapshot: Arc::new(AtomicCell::new(Registers::default())),
             },
 
             bus,
@@ -122,10 +128,12 @@ impl Emulator {
                 if policy(&mut self.cpu, &mut self.bus) {
                     self.runtime.policy = None;
                     self.runtime.state = EmulatorState::PauseRequested;
-                    return;
+                    break;
                 }
             }
         }
+
+        self.runtime.register_snapshot.store(self.cpu.get_registers());
 
         self.runtime.drift += timing::calculate_drift(start);
         timing::nap(&mut self.runtime.drift);
@@ -146,6 +154,7 @@ impl Emulator {
         let (emulator_tx, emulator_rx) = channel();
 
         let emulator = Self::new(cartridge, should_trace, emulator_tx, driver_rx);
+        let register_snapshot = emulator.runtime.register_snapshot.clone();
 
         let thread = thread::spawn(move || {
             let mut emulator = emulator;
@@ -156,6 +165,7 @@ impl Emulator {
             thread,
             tx: driver_tx,
             rx: emulator_rx,
+            register_snapshot,
         }
     }
 }

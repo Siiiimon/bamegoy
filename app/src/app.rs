@@ -12,9 +12,9 @@ pub struct App {
     is_running: bool,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        let handle = Emulator::init(vec![0; 0x8000], false);
+impl App {
+    pub fn new(cartridge: Vec<u8>) -> Self {
+        let handle = Emulator::init(cartridge, false);
         Self {
             handle,
 
@@ -52,19 +52,22 @@ pub fn update(app: &mut App, message: Message) {
             app.handle.tx.send(Command::PauseRequest).unwrap()
         },
         Message::RunPressed => {
-            app.handle.tx.send(Command::Run(Some(policy::single_step()))).unwrap()
+            app.handle.tx.send(Command::Run(Some(policy::run_forever()))).unwrap()
         }
     }
 
+    // FIX: update only runs if there's a Message
+    // handle_event should run whenever a new event is in the pipe
     handle_event(app);
 }
 
 pub fn view(app: &App) -> Element<Message> {
     let run_button_label = if app.is_running {"||"} else {">"};
     let run_button_message = if app.is_running {Message::PausePressed} else {Message::RunPressed};
+    let registers = app.handle.register_snapshot.load();
 
     row![
         button(run_button_label).on_press(run_button_message),
-        text("Hello World")
+        text(registers.pc)
     ].into()
 }

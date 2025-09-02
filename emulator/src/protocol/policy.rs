@@ -8,3 +8,9 @@ pub fn single_step() -> Policy {
         cpu.cycle_cooldown == 0
     })
 }
+
+pub fn run_forever() -> Policy {
+    Box::new(move |_cpu: &CPU, _bus: &Bus| {
+        false
+    })
+}

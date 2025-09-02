@@ -5,7 +5,7 @@ use crate::instruction::Instruction;
 use crate::util::Register;
 use crate::util::RegisterPair;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Registers {
     pub a: u8,
     pub b: u8,
@@ -20,7 +20,7 @@ pub struct Registers {
     pub pc: u16,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct Flags {
     pub zero: bool,
     pub subtraction: bool,
