@@ -62,6 +62,7 @@ pub fn update(app: &mut App, message: Message) {
 }
 
 pub fn view(app: &App) -> Element<Message> {
+    // TODO: do some composition: https://docs.rs/iced/0.13.1/iced/#scaling-applications
     let run_button_label = if app.is_running {"||"} else {">"};
     let run_button_message = if app.is_running {Message::PausePressed} else {Message::RunPressed};
     let registers = app.handle.register_snapshot.load();
