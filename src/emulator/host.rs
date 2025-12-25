@@ -1,4 +1,4 @@
-use std::sync::{mpsc::{Receiver, Sender}, Arc, Mutex};
+use std::sync::{mpsc::{Receiver, Sender, TryRecvError}, Arc, Mutex};
 
 use crate::emulator::{bus::Bus, cpu::CPU};
 
@@ -38,23 +38,27 @@ impl Host {
     }
 
     fn handle_driver_message(&mut self) {
-        let message = self.receiver.try_recv();
+        let message = match self.receiver.try_recv() {
+            Ok(m) => m,
+            Err(err) => {
+                if err == TryRecvError::Empty {
+                    return;
+                }
+                panic!("{}", err)
+            },
+        };
 
-        // fixme: make matcharm simpler, by panicing on err, returning on empty
-        // and only deal with happy path in match arm without `Ok(...)` wrapping it's distracting
 
         match message {
             // fixme: use proper module api instead of plainly mutating runtime state
-            Ok(DriverMessage::Run(policy)) => {
+            DriverMessage::Run(policy) => {
                 self.runtime.state = State::Running;
                 self.runtime.policy = policy;
                 self.runtime.tx.send(EmulatorMessage::Running).unwrap();
             }
-            Ok(DriverMessage::PauseRequest) => {
+            DriverMessage::PauseRequest => {
                 self.runtime.state = State::PauseRequested;
             }
-            Err(TryRecvError::Empty) => {}
-            Err(e) => panic!("{}", e),
         }
     }
 }
