@@ -1,4 +1,5 @@
-use crate::emulator::{host::Handle, Emulator};
+use crate::emulator::Emulator;
+use crate::emulator::host::handle::Handle;
 use std::{env, fs};
 
 pub mod emulator;

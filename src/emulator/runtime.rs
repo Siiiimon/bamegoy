@@ -1,43 +1,54 @@
+use crate::emulator::{
+    bus::Bus,
+    cpu::CPU,
+    host::{EmulatorMessage, policy::Policy},
+};
+
 pub struct Runtime {
     state: State,
+    policy: Option<Policy>,
+
+    cpu: CPU,
+    bus: Bus,
 }
 
 #[derive(PartialEq)]
 pub enum State {
-    PauseRequested,
     Paused,
     Running,
 }
 
 impl Runtime {
-    pub fn new() -> Self {
+    pub fn new(cpu: CPU, bus: Bus) -> Self {
         Self {
             state: State::Paused,
+            policy: None,
+            cpu,
+            bus,
         }
     }
 
-    fn handle_state(&mut self) {
+    pub fn transition_to(&mut self, new_state: State, new_policy: Option<Policy>) {
+        self.state = new_state;
+        self.policy = new_policy;
+    }
+
+    pub fn handle_current_state(&mut self) -> Option<EmulatorMessage> {
         match self.state {
-            State::PauseRequested => {
-                self.state = State::Paused;
-                self.tx.send(EmulatorMessage::Paused).unwrap();
-            }
-            State::Paused => {}
-            State::Running => match (self.cpu.try_lock(), self.bus.try_lock()) {
-                (Ok(mut cpu), Ok(mut bus)) => {
-                    cpu.step(&mut *bus);
-                    if let Some(p) = &mut self.runtime.policy {
-                        if p(&*cpu, &*bus) {
-                            self.runtime.policy = None;
-                            self.runtime.state = State::PauseRequested;
-                        }
+            State::Paused => None,
+            State::Running => {
+                self.cpu.step(&mut self.bus);
+
+                if let Some(p) = &mut self.policy {
+                    if p(&self.cpu, &self.bus) {
+                        self.policy = None;
+                        self.state = State::Paused;
+                        return Some(EmulatorMessage::Paused);
                     }
                 }
-                (Err(TryLockError::WouldBlock), _) | (_, Err(TryLockError::WouldBlock)) => {}
-                (Err(TryLockError::Poisoned(_)), _) | (_, Err(TryLockError::Poisoned(_))) => {
-                    panic!("CPU or Bus lock poisoned!");
-                }
-            },
+
+                None
+            }
         }
     }
 }

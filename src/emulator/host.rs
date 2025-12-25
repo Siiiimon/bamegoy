@@ -1,7 +1,8 @@
-use std::sync::{mpsc::{Receiver, Sender, TryRecvError}, Arc, Mutex};
+use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
-use crate::emulator::{bus::Bus, cpu::CPU};
+use crate::emulator::runtime::{Runtime, State};
 
+pub mod handle;
 pub mod policy;
 
 pub enum DriverMessage {
@@ -15,29 +16,21 @@ pub enum EmulatorMessage {
     Running,
 }
 
-pub struct Handle {
-    pub tx: Sender<DriverMessage>,
-    pub rx: Receiver<EmulatorMessage>,
-    pub cpu: Arc<Mutex<CPU>>,
-    pub bus: Arc<Mutex<Bus>>,
-}
-
 pub struct Host {
     sender: Sender<EmulatorMessage>,
     receiver: Receiver<DriverMessage>,
-    policy: Option<policy::Policy>,
 }
 
 impl Host {
     pub fn new(sender: Sender<EmulatorMessage>, receiver: Receiver<DriverMessage>) -> Self {
-        Self {
-            sender,
-            receiver,
-            policy: None,
-        }
+        Self { sender, receiver }
     }
 
-    fn handle_driver_message(&mut self) {
+    pub fn emit_message(&mut self, message: EmulatorMessage) {
+        self.sender.send(message).unwrap();
+    }
+
+    pub fn handle_driver_message(&mut self, runtime: &mut Runtime) {
         let message = match self.receiver.try_recv() {
             Ok(m) => m,
             Err(err) => {
@@ -45,19 +38,17 @@ impl Host {
                     return;
                 }
                 panic!("{}", err)
-            },
+            }
         };
 
-
         match message {
-            // fixme: use proper module api instead of plainly mutating runtime state
             DriverMessage::Run(policy) => {
-                self.runtime.state = State::Running;
-                self.runtime.policy = policy;
-                self.runtime.tx.send(EmulatorMessage::Running).unwrap();
+                runtime.transition_to(State::Running, policy);
+                self.emit_message(EmulatorMessage::Running);
             }
             DriverMessage::PauseRequest => {
-                self.runtime.state = State::PauseRequested;
+                runtime.transition_to(State::Paused, None);
+                self.emit_message(EmulatorMessage::Paused);
             }
         }
     }

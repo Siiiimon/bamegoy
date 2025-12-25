@@ -1,24 +1,24 @@
 use crate::emulator::bus::Bus;
 use crate::emulator::cpu::CPU;
-use crate::emulator::host::{DriverMessage, EmulatorMessage, Handle, Host};
-use crate::emulator::runtime::Runtime;
-use std::sync::mpsc::{Receiver, Sender, channel};
-use std::sync::{Arc, Mutex};
-use std::thread;
+use crate::emulator::host::handle::Handle;
+use crate::emulator::host::{DriverMessage, EmulatorMessage, Host};
+use crate::emulator::runtime::{Runtime, State};
+use std::{
+    sync::mpsc::{Receiver, Sender, channel},
+    thread,
+};
 
 pub mod bus;
 pub mod cpu;
 pub mod disassemble;
-pub mod instruction;
 pub mod host;
+pub mod instruction;
 pub mod runtime;
 pub mod util;
 
 pub struct Emulator {
     host: host::Host,
     runtime: runtime::Runtime,
-    bus: bus::SharedBus,
-    cpu: Arc<Mutex<CPU>>,
 }
 
 impl Emulator {
@@ -35,24 +35,21 @@ impl Emulator {
 
         Self {
             host: Host::new(sender, receiver),
-            runtime: Runtime::new(),
-
-            bus: Arc::new(Mutex::new(bus)),
-            cpu: Arc::new(Mutex::new(cpu)),
+            runtime: Runtime::new(cpu, bus),
         }
     }
 
-
-
     fn live(&mut self) {
-        // todo: when done writing a runtime and host api
-        // self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
+        self.host.emit_message(EmulatorMessage::Paused);
+        self.runtime.transition_to(State::Paused, None);
 
-        // loop {
-        //     self.handle_driver_message();
-        //
-        //     self.handle_state();
-        // }
+        loop {
+            self.host.handle_driver_message(&mut self.runtime);
+
+            if let Some(message) = self.runtime.handle_current_state() {
+                self.host.emit_message(message);
+            }
+        }
     }
 
     // usually, structs are instantiated with a public facing `new` or `default` method, which also
@@ -67,8 +64,10 @@ impl Emulator {
         let (emulator_tx, emulator_rx) = channel();
 
         let emulator = Self::new(cartridge, should_trace, emulator_tx, driver_rx);
-        let cpu_arc = emulator.cpu.clone();
-        let bus_arc = emulator.bus.clone();
+        // fixme: instead of cloning a mutable arc to the frontend, we should have the host module
+        // deal with an abstraction to these submodules
+        // let cpu_arc = emulator.cpu.clone();
+        // let bus_arc = emulator.bus.clone();
 
         thread::spawn(move || {
             let mut emulator = emulator;
@@ -78,8 +77,6 @@ impl Emulator {
         Handle {
             tx: driver_tx,
             rx: emulator_rx,
-            cpu: cpu_arc,
-            bus: bus_arc,
         }
     }
 }
