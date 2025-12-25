@@ -46,7 +46,6 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     })
 }
 
-
 pub fn a_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let imm = bus.read_byte(addr + 1).unwrap();
 

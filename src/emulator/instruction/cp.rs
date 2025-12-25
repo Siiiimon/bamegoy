@@ -56,4 +56,3 @@ pub fn a_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         operands: vec![Operand::Immediate8(imm)],
     })
 }
-

@@ -70,8 +70,11 @@ pub fn a16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         operands: if instr[1].is_empty() {
             vec![Operand::Address(target)]
         } else {
-            vec![Operand::Conditional(instr[1].clone()), Operand::Address(target)]
-        }
+            vec![
+                Operand::Conditional(instr[1].clone()),
+                Operand::Address(target),
+            ]
+        },
     })
 }
 
@@ -101,8 +104,11 @@ pub fn e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         operands: if instr[1].is_empty() {
             vec![Operand::Offset(offset)]
         } else {
-            vec![Operand::Conditional(instr[1].clone()), Operand::Offset(offset)]
-        }
+            vec![
+                Operand::Conditional(instr[1].clone()),
+                Operand::Offset(offset),
+            ]
+        },
     })
 }
 

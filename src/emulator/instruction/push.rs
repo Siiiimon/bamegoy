@@ -20,7 +20,7 @@ pub fn r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
 pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
 
-    Some(Disasm{
+    Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,

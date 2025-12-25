@@ -17,7 +17,12 @@ impl Serial {
         Ok(self.control.to_byte())
     }
 
-    pub fn write(&mut self, addr: u16, content: u8, interrupt: &mut Interrupt) -> Result<(), BusError> {
+    pub fn write(
+        &mut self,
+        addr: u16,
+        content: u8,
+        interrupt: &mut Interrupt,
+    ) -> Result<(), BusError> {
         if addr == 0xFF01 {
             self.content = content;
         }
@@ -44,7 +49,6 @@ pub struct Control {
     // is_high_speed: bool,
     pub should_use_internal_clock: bool, // clock_select
 }
-
 
 impl Control {
     fn to_byte(&self) -> u8 {

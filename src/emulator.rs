@@ -1,18 +1,18 @@
 use crate::emulator::bus::Bus;
 use crate::emulator::cpu::CPU;
+use crate::emulator::policy::Policy;
 use std::sync::mpsc::TryRecvError;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, TryLockError};
 use std::thread;
 use std::time::{Duration, Instant};
-use crate::emulator::policy::Policy;
 
 pub mod bus;
 pub mod cpu;
-pub mod instruction;
 pub mod disassemble;
-pub mod util;
+pub mod instruction;
 pub mod policy;
+pub mod util;
 
 pub struct Emulator {
     runtime: Runtime,
@@ -56,9 +56,14 @@ pub enum EmulatorMessage {
 }
 
 impl Emulator {
-     fn new(cartridge: Vec<u8>, should_trace: bool, tx: Sender<EmulatorMessage>, rx: Receiver<DriverMessage>) -> Self {
-         let cpu = CPU::new(should_trace);
-         let bus = Bus::from_cartridge_rom(cartridge).unwrap();
+    fn new(
+        cartridge: Vec<u8>,
+        should_trace: bool,
+        tx: Sender<EmulatorMessage>,
+        rx: Receiver<DriverMessage>,
+    ) -> Self {
+        let cpu = CPU::new(should_trace);
+        let bus = Bus::from_cartridge_rom(cartridge).unwrap();
 
         Self {
             runtime: Runtime {
@@ -83,12 +88,12 @@ impl Emulator {
                 self.runtime.state = State::Running;
                 self.runtime.policy = policy;
                 self.runtime.tx.send(EmulatorMessage::Running).unwrap();
-            },
+            }
             Ok(DriverMessage::PauseRequest) => {
                 self.runtime.state = State::PauseRequested;
-            },
-            Err(TryRecvError::Empty) => {},
-            Err(e) => panic!("{}", e);
+            }
+            Err(TryRecvError::Empty) => {}
+            Err(e) => panic!("{}", e),
         }
     }
 
@@ -99,25 +104,21 @@ impl Emulator {
                 self.runtime.tx.send(EmulatorMessage::Paused).unwrap();
             }
             State::Paused => {}
-            State::Running => {
-                match (self.cpu.try_lock(), self.bus.try_lock()) {
-                    (Ok(mut cpu), Ok(mut bus)) => {
-                        cpu.step(&mut *bus);
-                        if let Some(p) = &mut self.runtime.policy {
-                            if p(&*cpu, &*bus) {
-                                self.runtime.policy = None;
-                                self.runtime.state = State::PauseRequested;
-                            }
+            State::Running => match (self.cpu.try_lock(), self.bus.try_lock()) {
+                (Ok(mut cpu), Ok(mut bus)) => {
+                    cpu.step(&mut *bus);
+                    if let Some(p) = &mut self.runtime.policy {
+                        if p(&*cpu, &*bus) {
+                            self.runtime.policy = None;
+                            self.runtime.state = State::PauseRequested;
                         }
                     }
-                    (Err(TryLockError::WouldBlock), _) |
-                    (_, Err(TryLockError::WouldBlock)) => {},
-                    (Err(TryLockError::Poisoned(_)), _) |
-                    (_, Err(TryLockError::Poisoned(_))) => {
-                        panic!("CPU or Bus lock poisoned!");
-                    }
                 }
-            }
+                (Err(TryLockError::WouldBlock), _) | (_, Err(TryLockError::WouldBlock)) => {}
+                (Err(TryLockError::Poisoned(_)), _) | (_, Err(TryLockError::Poisoned(_))) => {
+                    panic!("CPU or Bus lock poisoned!");
+                }
+            },
         }
     }
 
@@ -127,7 +128,7 @@ impl Emulator {
         loop {
             self.handle_driver_message();
 
-            self.handle_state();            
+            self.handle_state();
         }
     }
 

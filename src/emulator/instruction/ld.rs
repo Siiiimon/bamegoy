@@ -1,6 +1,6 @@
-use crate::emulator::{bus, cpu};
 use crate::emulator::disassemble::{Disasm, Operand};
 use crate::emulator::util;
+use crate::emulator::{bus, cpu};
 
 pub fn r8_n8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let register_code = (opcode >> 3) & 0b111;
@@ -52,10 +52,10 @@ pub fn addr_of_r16_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
 
     match bus.write_byte(addr, value) {
         Ok(()) => (),
-        Err(e) => eprintln!("{}", e)
+        Err(e) => eprintln!("{}", e),
     }
 
-    cpu.pc +=1;
+    cpu.pc += 1;
 }
 
 pub fn a_addr_of_r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
@@ -72,7 +72,7 @@ pub fn a_addr_of_r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
 
     cpu.set_register(bus, util::Register::A, value);
 
-    cpu.pc +=1;
+    cpu.pc += 1;
 }
 
 pub fn addr_of_hl_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus, should_increase: bool) {
@@ -157,7 +157,10 @@ pub fn r8_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         length: 2,
         mnemonic: format!("LD {}, ${:02X}", reg, content),
         verb: "LD".into(),
-        operands: vec![Operand::Register8(reg.to_string()), Operand::Immediate8(content)],
+        operands: vec![
+            Operand::Register8(reg.to_string()),
+            Operand::Immediate8(content),
+        ],
     })
 }
 
@@ -171,7 +174,10 @@ pub fn r16_n16_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         length: 3,
         mnemonic: format!("LD {}, ${:04X}", pair, content),
         verb: "LD".into(),
-        operands: vec![Operand::Register16(pair.to_string()), Operand::Immediate16(content)],
+        operands: vec![
+            Operand::Register16(pair.to_string()),
+            Operand::Immediate16(content),
+        ],
     })
 }
 
@@ -184,7 +190,10 @@ pub fn r8_r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         length: 1,
         mnemonic: format!("LD {}, {}", dst, src),
         verb: "LD".into(),
-        operands: vec![Operand::Register8(dst.to_string()), Operand::Register8(src.to_string())],
+        operands: vec![
+            Operand::Register8(dst.to_string()),
+            Operand::Register8(src.to_string()),
+        ],
     })
 }
 
@@ -196,7 +205,10 @@ pub fn addr_of_r16_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Di
         length: 1,
         mnemonic: format!("LD ({}), A", pair),
         verb: "LD".into(),
-        operands: vec![Operand::MemoryIndirect(pair.to_string()), Operand::Register8("A".into())],
+        operands: vec![
+            Operand::MemoryIndirect(pair.to_string()),
+            Operand::Register8("A".into()),
+        ],
     })
 }
 
@@ -208,39 +220,40 @@ pub fn a_addr_of_r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Di
         length: 1,
         mnemonic: format!("LD A, ({})", pair),
         verb: "LD".into(),
-        operands: vec![Operand::Register8("A".into()), Operand::MemoryIndirect(pair.to_string())],
+        operands: vec![
+            Operand::Register8("A".into()),
+            Operand::MemoryIndirect(pair.to_string()),
+        ],
     })
 }
 
 pub fn addr_of_hl_a_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let hl = if opcode == 0x22 {
-        "HL+"
-    } else {
-        "HL-"
-    };
+    let hl = if opcode == 0x22 { "HL+" } else { "HL-" };
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("LD ({}), A", hl),
         verb: "LD".into(),
-        operands: vec![Operand::MemoryIndirect(hl.into()), Operand::Register8("A".into())],
+        operands: vec![
+            Operand::MemoryIndirect(hl.into()),
+            Operand::Register8("A".into()),
+        ],
     })
 }
 
 pub fn a_addr_of_hl_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
-    let hl = if opcode == 0x2A {
-        "HL+"
-    } else {
-        "HL-"
-    };
+    let hl = if opcode == 0x2A { "HL+" } else { "HL-" };
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("LD A, ({})", hl),
         verb: "LD".into(),
-        operands: vec![Operand::Register8("A".into()), Operand::MemoryIndirect(hl.into())],
+        operands: vec![
+            Operand::Register8("A".into()),
+            Operand::MemoryIndirect(hl.into()),
+        ],
     })
 }
 
@@ -292,6 +305,10 @@ pub fn hl_sp_e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> 
         length: 2,
         mnemonic: format!("LD HL, SP+{:+}", offset as i8),
         verb: "LD".into(),
-        operands: vec![Operand::Register16("HL".into()), Operand::Register16("SP".into()), Operand::Offset(offset as i8)],
+        operands: vec![
+            Operand::Register16("HL".into()),
+            Operand::Register16("SP".into()),
+            Operand::Offset(offset as i8),
+        ],
     })
 }

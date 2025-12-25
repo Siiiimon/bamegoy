@@ -28,8 +28,13 @@ pub fn r16(cpu: &mut cpu::CPU, pair: util::RegisterPair) {
     cpu.pc += 1;
 }
 
-pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8, pair: util::RegisterPair) -> Option<Disasm> {
-    Some(Disasm{
+pub fn r16_disasm(
+    _bus: &bus::Bus,
+    addr: u16,
+    opcode: u8,
+    pair: util::RegisterPair,
+) -> Option<Disasm> {
+    Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,
@@ -43,7 +48,7 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let register_code = (opcode >> 3) & 0b111;
     let register = util::get_register_by_code(register_code);
 
-    Some(Disasm{
+    Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,

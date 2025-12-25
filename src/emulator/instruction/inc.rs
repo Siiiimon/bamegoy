@@ -1,8 +1,8 @@
 use crate::emulator::bus;
+use crate::emulator::cpu;
 use crate::emulator::disassemble::Disasm;
 use crate::emulator::disassemble::Operand;
 use crate::emulator::util;
-use crate::emulator::cpu;
 
 pub fn r8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let register_code = (opcode >> 3) & 0b111;
@@ -30,7 +30,12 @@ pub fn r16(cpu: &mut cpu::CPU, pair: util::RegisterPair) {
     cpu.pc += 1;
 }
 
-pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8, pair: util::RegisterPair) -> Option<Disasm> {
+pub fn r16_disasm(
+    _bus: &bus::Bus,
+    addr: u16,
+    opcode: u8,
+    pair: util::RegisterPair,
+) -> Option<Disasm> {
     Some(Disasm {
         address: addr,
         bytes: vec![opcode],

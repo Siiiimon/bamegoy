@@ -33,67 +33,45 @@ impl Bus {
 
     pub fn from_cartridge_rom(cart: Vec<u8>) -> Result<Self, String> {
         let mut bus = Self::new();
-        if cart.len() > bus.rom.len() { return Err("Cartridge rom too big!".to_string()); }
+        if cart.len() > bus.rom.len() {
+            return Err("Cartridge rom too big!".to_string());
+        }
         bus.rom[..cart.len()].copy_from_slice(&cart);
         Ok(bus)
     }
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, BusError> {
         match addr {
-            0x0..0x8000 => {
-                Self::mem_read(&self.rom, addr)
-            }
-            0x8000..0xA000 => {
-                Self::mem_read(&self.vram, addr - 0x8000)
-            }
-            0xA000..0xE000 => {
-                Self::mem_read(&self.ram, addr - 0xA000)
-            }
-            0xFE00..0xFEA0 => {
-                Self::mem_read(&self.oam, addr - 0xFE00)
-            }
-            0xFF00..0xFF80 => {
-                match addr {
-                    0xFF01 | 0xFF02 => self.serial.read(addr),
-                    0xFF0F | 0xFFFF => self.interrupts.read(addr),
-                    _ => Err(BusError::Unimplemented(addr))
-                }
-            }
-            0xFF80..=0xFFFE => {
-                Self::mem_read(&self.high_ram, addr - 0xFF80)
-            }
-            _ => Err(BusError::OutOfBounds(addr))
+            0x0..0x8000 => Self::mem_read(&self.rom, addr),
+            0x8000..0xA000 => Self::mem_read(&self.vram, addr - 0x8000),
+            0xA000..0xE000 => Self::mem_read(&self.ram, addr - 0xA000),
+            0xFE00..0xFEA0 => Self::mem_read(&self.oam, addr - 0xFE00),
+            0xFF00..0xFF80 => match addr {
+                0xFF01 | 0xFF02 => self.serial.read(addr),
+                0xFF0F | 0xFFFF => self.interrupts.read(addr),
+                _ => Err(BusError::Unimplemented(addr)),
+            },
+            0xFF80..=0xFFFE => Self::mem_read(&self.high_ram, addr - 0xFF80),
+            _ => Err(BusError::OutOfBounds(addr)),
         }
     }
 
     pub fn write_byte(&mut self, addr: u16, content: u8) -> Result<(), BusError> {
         match addr {
-            0x0..0x8000 => {
-                Self::mem_write(&mut self.rom, addr, content)
-            }
-            0x8000..0xA000 => {
-                Self::mem_write(&mut self.vram, addr - 0x8000, content)
-            }
-            0xA000..0xE000 => {
-                Self::mem_write(&mut self.ram, addr - 0xA000, content)
-            }
-            0xFE00..0xFEA0 => {
-                Self::mem_write(&mut self.oam, addr - 0xFE00, content)
-            }
-            0xFF00..0xFF80 => {
-                match addr {
-                    0xFF01 | 0xFF02 => {
-                        let serial_int = &mut self.interrupts.get_mut(InterruptKind::Serial);
-                        self.serial.write(addr, content, serial_int)
-                    }
-                    0xFF0F | 0xFFFF => self.interrupts.write(addr, content),
-                    _ => Err(BusError::Unimplemented(addr))
+            0x0..0x8000 => Self::mem_write(&mut self.rom, addr, content),
+            0x8000..0xA000 => Self::mem_write(&mut self.vram, addr - 0x8000, content),
+            0xA000..0xE000 => Self::mem_write(&mut self.ram, addr - 0xA000, content),
+            0xFE00..0xFEA0 => Self::mem_write(&mut self.oam, addr - 0xFE00, content),
+            0xFF00..0xFF80 => match addr {
+                0xFF01 | 0xFF02 => {
+                    let serial_int = &mut self.interrupts.get_mut(InterruptKind::Serial);
+                    self.serial.write(addr, content, serial_int)
                 }
-            }
-            0xFF80..0xFFFD => {
-                Self::mem_write(&mut self.high_ram, addr - 0xFF80, content)
-            }
-            _ => Err(BusError::OutOfBounds(addr))
+                0xFF0F | 0xFFFF => self.interrupts.write(addr, content),
+                _ => Err(BusError::Unimplemented(addr)),
+            },
+            0xFF80..0xFFFD => Self::mem_write(&mut self.high_ram, addr - 0xFF80, content),
+            _ => Err(BusError::OutOfBounds(addr)),
         }
     }
 
@@ -115,12 +93,16 @@ impl Bus {
     }
 
     fn mem_read(mem: &[u8], addr: u16) -> Result<u8, BusError> {
-        if addr as usize >= mem.len() { return Err(BusError::OutOfBounds(addr)); }
+        if addr as usize >= mem.len() {
+            return Err(BusError::OutOfBounds(addr));
+        }
         Ok(mem[addr as usize])
     }
 
     fn mem_write(mem: &mut [u8], addr: u16, content: u8) -> Result<(), BusError> {
-        if addr as usize >= mem.len() { return Err(BusError::OutOfBounds(addr)); }
+        if addr as usize >= mem.len() {
+            return Err(BusError::OutOfBounds(addr));
+        }
         mem[addr as usize] = content;
         Ok(())
     }
@@ -128,13 +110,16 @@ impl Bus {
     pub fn push_word(&mut self, sp: &mut u16, content: u16) -> Result<(), BusError> {
         *sp -= 2;
 
-        if (*sp as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(*sp)) }
+        if (*sp as usize) + 1 >= self.rom.len() {
+            return Err(BusError::OutOfBounds(*sp));
+        }
         self.write_word(*sp, content)
-
     }
 
     pub fn pop_word(&mut self, sp: &mut u16) -> Result<u16, BusError> {
-        if (*sp as usize) + 1 >= self.rom.len() { return Err(BusError::OutOfBounds(*sp)) }
+        if (*sp as usize) + 1 >= self.rom.len() {
+            return Err(BusError::OutOfBounds(*sp));
+        }
 
         let content = self.read_word(*sp)?;
 

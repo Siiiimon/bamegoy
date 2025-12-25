@@ -13,5 +13,5 @@ pub(crate) fn halt_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disa
         mnemonic: "HALT".into(),
         verb: "HALT".into(),
         operands: vec![],
-   })
+    })
 }

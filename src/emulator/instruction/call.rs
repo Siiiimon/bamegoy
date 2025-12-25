@@ -1,4 +1,7 @@
-use crate::emulator::{bus, cpu, disassemble::{Disasm, Operand}};
+use crate::emulator::{
+    bus, cpu,
+    disassemble::{Disasm, Operand},
+};
 
 pub fn call(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let lo = bus.read_byte(cpu.pc + 1).unwrap();
@@ -41,8 +44,10 @@ pub fn call_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         operands: if instr[1].is_empty() {
             vec![Operand::Address(target)]
         } else {
-            vec![Operand::Conditional(instr[1].clone()), Operand::Address(target)]
-        }
+            vec![
+                Operand::Conditional(instr[1].clone()),
+                Operand::Address(target),
+            ]
+        },
     })
 }
-

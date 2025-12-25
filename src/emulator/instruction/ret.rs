@@ -51,6 +51,6 @@ pub fn ret_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
             vec![]
         } else {
             vec![Operand::Conditional(instr[1].to_string())]
-        }
+        },
     })
 }

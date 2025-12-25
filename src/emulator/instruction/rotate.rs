@@ -17,7 +17,11 @@ pub fn rlca(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
 pub fn rla(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let value = cpu.get_register(bus, util::Register::A);
 
-    cpu.set_register(bus, util::Register::A, (value << 1) | (cpu.flags.carry as u8));
+    cpu.set_register(
+        bus,
+        util::Register::A,
+        (value << 1) | (cpu.flags.carry as u8),
+    );
 
     cpu.flags.zero = false;
     cpu.flags.subtraction = false;
@@ -30,7 +34,11 @@ pub fn rla(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
 pub fn rra(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let value = cpu.get_register(bus, util::Register::A);
 
-    cpu.set_register(bus, util::Register::A, (value >> 1) | ((cpu.flags.carry as u8) << 7));
+    cpu.set_register(
+        bus,
+        util::Register::A,
+        (value >> 1) | ((cpu.flags.carry as u8) << 7),
+    );
 
     cpu.flags.zero = false;
     cpu.flags.subtraction = false;

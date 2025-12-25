@@ -1,7 +1,7 @@
 #[derive(Debug)]
 pub enum BusError {
     OutOfBounds(u16),
-    Unimplemented(u16)
+    Unimplemented(u16),
 }
 
 impl std::fmt::Display for BusError {

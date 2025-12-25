@@ -1,9 +1,9 @@
 use crate::disassemble;
 use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
-use crate::emulator::util::get_register_pair_by_code;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
+use crate::emulator::util::get_register_pair_by_code;
 
 pub struct Flags {
     pub zero: bool,
@@ -223,7 +223,12 @@ impl CPU {
                     if self.flags.subtraction { "N" } else { "-" },
                     if self.flags.half_carry { "H" } else { "-" },
                     if self.flags.carry { "C" } else { "-" },
-                    self.b, self.c, self.d, self.e, self.h, self.l,
+                    self.b,
+                    self.c,
+                    self.d,
+                    self.e,
+                    self.h,
+                    self.l,
                     self.sp,
                 );
             } else {

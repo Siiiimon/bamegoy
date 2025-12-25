@@ -67,7 +67,7 @@ pub fn sp_e8(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
 pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let register = util::get_register_by_code(opcode & 0b111);
 
-    Some(Disasm{
+    Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,
@@ -106,12 +106,12 @@ pub fn sp_e8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
 pub fn r16_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);
 
-    Some(Disasm{
+    Some(Disasm {
         address: addr,
         bytes: vec![opcode],
         length: 1,
         mnemonic: format!("ADD {}", pair),
         verb: "ADD".to_string(),
-        operands: vec![Operand::Register16(pair.to_string())]
+        operands: vec![Operand::Register16(pair.to_string())],
     })
 }

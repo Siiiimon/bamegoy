@@ -47,7 +47,10 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         length: 1,
         mnemonic: format!("SBC A, {}", register),
         verb: "SBC".into(),
-        operands: vec![Operand::Register8("A".into()), Operand::Register8(register.to_string())]
+        operands: vec![
+            Operand::Register8("A".into()),
+            Operand::Register8(register.to_string()),
+        ],
     })
 }
 

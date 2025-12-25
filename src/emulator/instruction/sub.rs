@@ -42,7 +42,10 @@ pub fn r8_disasm(_bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         length: 1,
         mnemonic: format!("SUB A, {}", register),
         verb: "SUB".into(),
-        operands: vec![Operand::Register8("A".into()), Operand::Register8(register.to_string())],
+        operands: vec![
+            Operand::Register8("A".into()),
+            Operand::Register8(register.to_string()),
+        ],
     })
 }
 
@@ -58,4 +61,3 @@ pub fn a_n8_disasm(bus: &bus::Bus, addr: u16, opcode: u8) -> Option<Disasm> {
         operands: vec![Operand::Register8("A".into()), Operand::Immediate8(imm)],
     })
 }
-
