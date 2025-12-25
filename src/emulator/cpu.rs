@@ -1,5 +1,5 @@
-use crate::emulator::disassemble;
 use crate::emulator::bus::Bus;
+use crate::emulator::disassemble;
 use crate::emulator::instruction;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;

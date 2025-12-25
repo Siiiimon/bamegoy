@@ -1,3 +1,5 @@
+// fixme: this whole crate should really be a frontend thing, because neither the cpu nor emulator
+// care about human readable disassembly
 use std::fmt;
 
 use crate::emulator::{bus, instruction, util::get_register_pair_by_code};
