@@ -7,7 +7,7 @@ pub mod emulator;
 // this struct should basically represent the ui
 
 struct BamegoyApp {
-    emulator_handle: Handle,
+    _emulator_handle: Handle,
 }
 
 impl BamegoyApp {
@@ -26,7 +26,7 @@ impl BamegoyApp {
         let handle = Emulator::init(cartridge_rom, should_trace_log);
 
         Self {
-            emulator_handle: handle,
+            _emulator_handle: handle,
         }
     }
 }

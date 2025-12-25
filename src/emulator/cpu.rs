@@ -1,4 +1,4 @@
-use crate::disassemble;
+use crate::emulator::disassemble;
 use crate::emulator::bus::Bus;
 use crate::emulator::instruction;
 use crate::emulator::util::Register;
@@ -213,7 +213,7 @@ impl CPU {
         }
 
         if self.should_trace_log {
-            if let Some(disasm) = disassemble(&*bus, self.pc) {
+            if let Some(disasm) = disassemble::disassemble(&*bus, self.pc) {
                 println!(
                     "{:04X}: {:<12} | A:{:02X} F:{}{}{}{} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X}",
                     disasm.address,

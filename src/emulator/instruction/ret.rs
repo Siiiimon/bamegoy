@@ -7,8 +7,6 @@ pub fn ret(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
         Ok(addr) => addr,
         Err(e) => {
             panic!("Failed to pop return address: {}", e);
-            cpu.pc += 1;
-            return;
         }
     };
 
