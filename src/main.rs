@@ -1,4 +1,4 @@
-use crate::emulator::{Emulator, Handle};
+use crate::emulator::{host::Handle, Emulator};
 use std::{env, fs};
 
 pub mod emulator;
@@ -46,5 +46,5 @@ fn main() {
         }
     }
 
-    BamegoyApp::new(rom_filepath, should_trace_log)
+    BamegoyApp::new(rom_filepath, should_trace_log);
 }
