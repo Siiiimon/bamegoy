@@ -5,8 +5,9 @@ mod error;
 pub mod io;
 
 pub struct Bus {
-    pub rom: Box<[u8]>,
-    pub serial: io::serial::Serial,
+    rom: Box<[u8]>,
+    serial: io::serial::Serial,
+    // fixme: interrupts shouldn't need to be pub
     pub interrupts: io::interrupts::Interrupts,
 }
 
