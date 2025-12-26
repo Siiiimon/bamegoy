@@ -1,6 +1,7 @@
-use crate::emulator::bus;
-use crate::emulator::disassemble::Operand;
-use crate::emulator::{cpu, disassemble::Disasm, util};
+use crate::emulator::runtime::bus;
+use crate::emulator::runtime::disassemble::Operand;
+use crate::emulator::runtime::{cpu, disassemble::Disasm};
+use crate::emulator::util;
 
 pub fn r16(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let pair = util::get_register_pair_by_code((opcode >> 4) & 0b11);

@@ -1,6 +1,6 @@
-use crate::emulator::disassemble::{Disasm, Operand};
+use crate::emulator::runtime::disassemble::{Disasm, Operand};
+use crate::emulator::runtime::{bus, cpu};
 use crate::emulator::util;
-use crate::emulator::{bus, cpu};
 
 pub fn r8_n8(cpu: &mut cpu::CPU, bus: &mut bus::Bus, opcode: u8) {
     let register_code = (opcode >> 3) & 0b111;

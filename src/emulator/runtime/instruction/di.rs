@@ -1,5 +1,5 @@
-use crate::emulator::bus;
-use crate::emulator::{cpu, disassemble::Disasm};
+use crate::emulator::runtime::bus;
+use crate::emulator::runtime::{cpu, disassemble::Disasm};
 
 pub fn di(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     bus.interrupts.ime = false;

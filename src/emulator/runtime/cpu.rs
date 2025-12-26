@@ -1,6 +1,6 @@
-use crate::emulator::bus::Bus;
-use crate::emulator::disassemble;
-use crate::emulator::instruction;
+use crate::emulator::runtime::bus::Bus;
+use crate::emulator::runtime::disassemble;
+use crate::emulator::runtime::instruction;
 use crate::emulator::util::Register;
 use crate::emulator::util::RegisterPair;
 use crate::emulator::util::get_register_pair_by_code;

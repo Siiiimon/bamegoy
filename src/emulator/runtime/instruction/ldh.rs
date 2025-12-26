@@ -1,8 +1,8 @@
-use crate::emulator::{
+use crate::emulator::runtime::{
     bus, cpu,
     disassemble::{Disasm, Operand},
-    util,
 };
+use crate::emulator::util;
 
 pub fn a8_a(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let value = cpu.get_register(bus, util::Register::A);

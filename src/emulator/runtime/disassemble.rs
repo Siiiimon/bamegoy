@@ -2,7 +2,8 @@
 // care about human readable disassembly
 use std::fmt;
 
-use crate::emulator::{bus, instruction, util::get_register_pair_by_code};
+use crate::emulator::runtime::{bus, instruction};
+use crate::emulator::util::get_register_pair_by_code;
 
 pub struct Disasm {
     pub address: u16,

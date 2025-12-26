@@ -1,5 +1,6 @@
-use crate::emulator::bus;
-use crate::emulator::{cpu, disassemble::Disasm, util};
+use crate::emulator::runtime::bus;
+use crate::emulator::runtime::{cpu, disassemble::Disasm};
+use crate::emulator::util;
 
 pub fn cpl(cpu: &mut cpu::CPU, bus: &mut bus::Bus) {
     let value = cpu.get_register(bus, util::Register::A);
