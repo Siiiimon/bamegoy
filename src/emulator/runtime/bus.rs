@@ -6,6 +6,7 @@ pub mod io;
 
 pub struct Bus {
     rom: Box<[u8]>,
+    vram: Box<[u8]>,
     serial: io::serial::Serial,
     // fixme: interrupts shouldn't need to be pub
     pub interrupts: io::interrupts::Interrupts,
@@ -15,6 +16,7 @@ impl Bus {
     pub fn new() -> Self {
         Self {
             rom: vec![0; 0x8000].into_boxed_slice(),
+            vram: vec![0; 0x4000].into_boxed_slice(),
             serial: io::serial::Serial::default(),
             interrupts: io::interrupts::Interrupts::default(),
         }
@@ -31,7 +33,8 @@ impl Bus {
 
     pub fn read_byte(&self, addr: u16) -> Result<u8, BusError> {
         match addr {
-            0x0..0x8000 => Self::mem_read(&self.rom, addr),
+            0x0..=0x7FFF => Self::mem_read(&self.rom, addr),
+            0x8000..=0x9FFF => Self::mem_read(&self.vram, addr - 0x8000),
             0xFF00..0xFF80 => match addr {
                 0xFF01 | 0xFF02 => self.serial.read(addr),
                 0xFF0F | 0xFFFF => self.interrupts.read(addr),

@@ -2,6 +2,7 @@ pub mod bus;
 pub mod cpu;
 pub mod disassemble;
 pub mod instruction;
+pub mod ppu;
 
 use crate::emulator::host::{EmulatorMessage, policy::Policy};
 use crate::emulator::runtime::{bus::Bus, cpu::CPU};
