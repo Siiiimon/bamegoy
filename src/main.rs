@@ -1,13 +1,13 @@
 use crate::emulator::Emulator;
 use crate::emulator::host::handle::Handle;
-use std::{env, fs};
+use std::{env, fs, sync::mpsc::TryRecvError};
 
 pub mod emulator;
 
 // this struct should basically represent the ui
 
 struct BamegoyApp {
-    _emulator_handle: Handle,
+    emulator_handle: Handle,
 }
 
 impl BamegoyApp {
@@ -26,7 +26,7 @@ impl BamegoyApp {
         let handle = Emulator::init(cartridge_rom, should_trace_log);
 
         Self {
-            _emulator_handle: handle,
+            emulator_handle: handle,
         }
     }
 }
@@ -47,5 +47,18 @@ fn main() {
         }
     }
 
-    BamegoyApp::new(rom_filepath, should_trace_log);
+    let app = BamegoyApp::new(rom_filepath, should_trace_log);
+
+    loop {
+        let message = match app.emulator_handle.rx.try_recv() {
+            Ok(m) => m,
+            Err(err) => {
+                if err == TryRecvError::Empty {
+                    continue;
+                }
+                panic!("{}", err)
+            }
+        };
+        println!("{:?}", message);
+    }
 }
