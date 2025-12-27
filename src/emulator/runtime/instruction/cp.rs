@@ -1,5 +1,5 @@
-use crate::emulator::runtime::disassemble::Operand;
 use crate::emulator::runtime::bus;
+use crate::emulator::runtime::disassemble::Operand;
 use crate::emulator::runtime::{cpu, disassemble::Disasm};
 use crate::emulator::util;
 
